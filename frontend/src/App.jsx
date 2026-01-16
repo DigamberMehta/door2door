@@ -1,46 +1,97 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import HeroSection from "./pages/home/herosection";
-import Categories from "./pages/home/categories";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
+import HomePage from "./pages/homepage/HomePage";
+import StoreDetailPage from "./pages/StoreDetailPage";
+import FilterPage from "./pages/FilterPage";
 
-const App = () => {
+// Wrapper component to provide navigation handlers
+function AppContent() {
+  const navigate = useNavigate();
+
+  const handleStoreClick = (store) => {
+    navigate(`/store/${store.id}`, { state: { store } });
+  };
+
+  const handleCategoryClick = (category) => {
+    navigate(
+      `/category/${category.category.toLowerCase().replace(/\s+/g, "-")}`,
+      {
+        state: { category },
+      }
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950">
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomePage
+              onStoreClick={handleStoreClick}
+              onCategoryClick={handleCategoryClick}
+            />
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <HomePage
+              onStoreClick={handleStoreClick}
+              onCategoryClick={handleCategoryClick}
+            />
+          }
+        />
+        <Route path="/store/:id" element={<StoreDetailPage />} />
+        <Route
+          path="/category/:categoryName"
+          element={<FilterPage onStoreClick={handleStoreClick} />}
+        />
+        <Route
+          path="/grocery"
+          element={<FilterPage onStoreClick={handleStoreClick} />}
+        />
+        <Route
+          path="/snacks"
+          element={<FilterPage onStoreClick={handleStoreClick} />}
+        />
+        <Route
+          path="/beauty"
+          element={<FilterPage onStoreClick={handleStoreClick} />}
+        />
+        <Route
+          path="/home-lifestyle"
+          element={<FilterPage onStoreClick={handleStoreClick} />}
+        />
+        <Route
+          path="/stores"
+          element={<FilterPage onStoreClick={handleStoreClick} />}
+        />
+        {/* 404 Route - redirect to home */}
+        <Route
+          path="*"
+          element={
+            <HomePage
+              onStoreClick={handleStoreClick}
+              onCategoryClick={handleCategoryClick}
+            />
+          }
+        />
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-black">
-        <Navbar />
-        <main>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <>
-                  <HeroSection />
-                  <Categories />
-                </>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <div className="text-white container mx-auto px-4 py-8">
-                  Products Page
-                </div>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <div className="text-white container mx-auto px-4 py-8">
-                  Orders Page
-                </div>
-              }
-            />
-          </Routes>
-        </main>
-      </div>
+      <AppContent />
     </Router>
   );
-};
+}
 
 export default App;
