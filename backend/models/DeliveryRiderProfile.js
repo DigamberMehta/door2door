@@ -1,0 +1,785 @@
+import mongoose from "mongoose";
+
+// Vehicle information sub-schema
+const vehicleSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: [
+        "bicycle",
+        "motorcycle",
+        "scooter",
+        "car",
+        "van",
+        "truck",
+        "electric_bike",
+        "walking",
+      ],
+      required: [true, "Vehicle type is required"],
+    },
+    make: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    model: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    year: {
+      type: Number,
+      min: 1990,
+      max: new Date().getFullYear() + 1,
+    },
+    color: {
+      type: String,
+      trim: true,
+      maxlength: 30,
+    },
+    licensePlate: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      maxlength: 20,
+    },
+    registrationNumber: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    insuranceNumber: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    insuranceExpiry: {
+      type: Date,
+    },
+    registrationExpiry: {
+      type: Date,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// Documents sub-schema
+const documentsSchema = new mongoose.Schema(
+  {
+    drivingLicense: {
+      number: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      expiryDate: Date,
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      imageUrl: String,
+    },
+    nationalId: {
+      number: {
+        type: String,
+        trim: true,
+        maxlength: 50,
+      },
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
+      imageUrl: String,
+    },
+    backgroundCheck: {
+      status: {
+        type: String,
+        enum: ["pending", "approved", "rejected", "expired"],
+        default: "pending",
+      },
+      completedAt: Date,
+      expiryDate: Date,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// Bank details sub-schema
+const bankDetailsSchema = new mongoose.Schema(
+  {
+    accountHolderName: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    accountNumber: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+      select: false, // Hide by default for security
+    },
+    bankName: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+    routingNumber: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+    },
+    accountType: {
+      type: String,
+      enum: ["checking", "savings"],
+      default: "checking",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// Emergency contact sub-schema
+const emergencyContactSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Emergency contact name is required"],
+      trim: true,
+      maxlength: 100,
+    },
+    phone: {
+      type: String,
+      required: [true, "Emergency contact phone is required"],
+      trim: true,
+    },
+    relationship: {
+      type: String,
+      required: [true, "Relationship is required"],
+      trim: true,
+      maxlength: 50,
+    },
+    address: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// Work schedule sub-schema
+const workScheduleSchema = new mongoose.Schema(
+  {
+    day: {
+      type: String,
+      enum: [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ],
+      required: [true, "Day is required"],
+    },
+    isWorking: {
+      type: Boolean,
+      default: true,
+    },
+    startTime: {
+      type: String,
+      required: function () {
+        return this.isWorking;
+      },
+      validate: {
+        validator: function (v) {
+          return !this.isWorking || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
+        },
+        message: "Start time must be in HH:MM format",
+      },
+    },
+    endTime: {
+      type: String,
+      required: function () {
+        return this.isWorking;
+      },
+      validate: {
+        validator: function (v) {
+          return !this.isWorking || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
+        },
+        message: "End time must be in HH:MM format",
+      },
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// Delivery statistics sub-schema
+const deliveryStatsSchema = new mongoose.Schema(
+  {
+    totalDeliveries: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    completedDeliveries: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    cancelledDeliveries: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalEarnings: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalTips: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    averageRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    totalRatings: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    completionRate: {
+      type: Number,
+      default: 100,
+      min: 0,
+      max: 100,
+    },
+    averageDeliveryTime: {
+      type: Number, // in minutes
+      min: 0,
+    },
+    onTimeDeliveryRate: {
+      type: Number,
+      default: 100,
+      min: 0,
+      max: 100,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// Main delivery rider profile schema
+const deliveryRiderProfileSchema = new mongoose.Schema(
+  {
+    // User Reference
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "User ID is required"],
+      unique: true,
+      index: true,
+    },
+
+    // Personal Information
+    dateOfBirth: {
+      type: Date,
+      required: [true, "Date of birth is required"],
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other", "prefer_not_to_say"],
+    },
+    address: {
+      street: {
+        type: String,
+        required: [true, "Street address is required"],
+        trim: true,
+        maxlength: 200,
+      },
+      city: {
+        type: String,
+        required: [true, "City is required"],
+        trim: true,
+        maxlength: 100,
+      },
+      state: {
+        type: String,
+        required: [true, "State is required"],
+        trim: true,
+        maxlength: 100,
+      },
+      zipCode: {
+        type: String,
+        required: [true, "Zip code is required"],
+        trim: true,
+        maxlength: 20,
+      },
+      country: {
+        type: String,
+        required: [true, "Country is required"],
+        trim: true,
+        default: "US",
+      },
+    },
+
+    // Vehicle Information
+    vehicle: vehicleSchema,
+
+    // Documents and Verification
+    documents: documentsSchema,
+
+    // Banking Information
+    bankDetails: bankDetailsSchema,
+
+    // Emergency Contact
+    emergencyContact: emergencyContactSchema,
+
+    // Work Schedule
+    workSchedule: [workScheduleSchema],
+
+    // Current Status
+    status: {
+      type: String,
+      enum: ["offline", "online", "busy", "unavailable"],
+      default: "offline",
+      index: true,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    // Current Location
+    currentLocation: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        validate: {
+          validator: function (coords) {
+            return (
+              coords.length === 2 &&
+              coords[0] >= -180 &&
+              coords[0] <= 180 && // longitude
+              coords[1] >= -90 &&
+              coords[1] <= 90
+            ); // latitude
+          },
+          message: "Invalid coordinates",
+        },
+      },
+      lastUpdated: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+
+    // Service Areas
+    serviceAreas: [
+      {
+        city: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        zipCodes: [String],
+        radius: {
+          type: Number, // in kilometers
+          min: 1,
+          max: 50,
+        },
+      },
+    ],
+
+    // Performance and Statistics
+    stats: deliveryStatsSchema,
+
+    // Preferences
+    preferences: {
+      maxDeliveriesPerDay: {
+        type: Number,
+        default: 20,
+        min: 1,
+        max: 50,
+      },
+      preferredVehicleType: {
+        type: String,
+        enum: [
+          "bicycle",
+          "motorcycle",
+          "scooter",
+          "car",
+          "van",
+          "truck",
+          "electric_bike",
+          "walking",
+        ],
+      },
+      acceptCashPayments: {
+        type: Boolean,
+        default: true,
+      },
+      autoAcceptOrders: {
+        type: Boolean,
+        default: false,
+      },
+      notificationPreferences: {
+        sms: {
+          type: Boolean,
+          default: true,
+        },
+        email: {
+          type: Boolean,
+          default: true,
+        },
+        push: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    },
+
+    // Account Status
+    isVerified: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    suspensionReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    suspendedAt: {
+      type: Date,
+    },
+    suspendedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    // Onboarding
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    approvedAt: {
+      type: Date,
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    // Last Activity
+    lastActiveAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes for performance
+deliveryRiderProfileSchema.index({ userId: 1, isActive: 1 });
+deliveryRiderProfileSchema.index({ status: 1, isAvailable: 1 });
+deliveryRiderProfileSchema.index({ isVerified: 1, isActive: 1 });
+deliveryRiderProfileSchema.index({
+  "stats.averageRating": -1,
+  "stats.completionRate": -1,
+});
+deliveryRiderProfileSchema.index({ lastActiveAt: -1 });
+deliveryRiderProfileSchema.index({ "serviceAreas.city": 1, isAvailable: 1 });
+
+// Geospatial index for location-based queries
+deliveryRiderProfileSchema.index({ currentLocation: "2dsphere" });
+
+// Pre-save middleware
+deliveryRiderProfileSchema.pre("save", function (next) {
+  // Update last active time when status changes
+  if (this.isModified("status") && this.status !== "offline") {
+    this.lastActiveAt = new Date();
+  }
+
+  // Calculate completion rate
+  if (this.stats.totalDeliveries > 0) {
+    this.stats.completionRate = Math.round(
+      (this.stats.completedDeliveries / this.stats.totalDeliveries) * 100
+    );
+  }
+
+  // Set default work schedule if none provided
+  if (this.workSchedule.length === 0) {
+    const days = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ];
+    this.workSchedule = days.map((day) => ({
+      day,
+      isWorking: true,
+      startTime: "09:00",
+      endTime: "21:00",
+    }));
+  }
+
+  next();
+});
+
+// Instance methods
+deliveryRiderProfileSchema.methods.updateLocation = function (
+  longitude,
+  latitude
+) {
+  this.currentLocation = {
+    type: "Point",
+    coordinates: [longitude, latitude],
+    lastUpdated: new Date(),
+  };
+  this.lastActiveAt = new Date();
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.setOnline = function () {
+  this.status = "online";
+  this.isAvailable = true;
+  this.lastActiveAt = new Date();
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.setOffline = function () {
+  this.status = "offline";
+  this.isAvailable = false;
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.setBusy = function () {
+  this.status = "busy";
+  this.isAvailable = false;
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.updateStats = function (deliveryData) {
+  this.stats.totalDeliveries += 1;
+
+  if (deliveryData.completed) {
+    this.stats.completedDeliveries += 1;
+  } else {
+    this.stats.cancelledDeliveries += 1;
+  }
+
+  if (deliveryData.earnings) {
+    this.stats.totalEarnings += deliveryData.earnings;
+  }
+
+  if (deliveryData.tip) {
+    this.stats.totalTips += deliveryData.tip;
+  }
+
+  if (deliveryData.rating) {
+    if (this.stats.averageRating && this.stats.totalRatings > 0) {
+      this.stats.averageRating =
+        (this.stats.averageRating * this.stats.totalRatings +
+          deliveryData.rating) /
+        (this.stats.totalRatings + 1);
+    } else {
+      this.stats.averageRating = deliveryData.rating;
+    }
+    this.stats.totalRatings += 1;
+  }
+
+  if (deliveryData.deliveryTime) {
+    if (this.stats.averageDeliveryTime) {
+      this.stats.averageDeliveryTime =
+        (this.stats.averageDeliveryTime * (this.stats.completedDeliveries - 1) +
+          deliveryData.deliveryTime) /
+        this.stats.completedDeliveries;
+    } else {
+      this.stats.averageDeliveryTime = deliveryData.deliveryTime;
+    }
+  }
+
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.isWorkingNow = function () {
+  const now = new Date();
+  const currentDay = now.toLocaleDateString("en-US", { weekday: "lowercase" });
+  const currentTime = now.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const todaySchedule = this.workSchedule.find((s) => s.day === currentDay);
+  if (!todaySchedule || !todaySchedule.isWorking) return false;
+
+  return (
+    currentTime >= todaySchedule.startTime &&
+    currentTime <= todaySchedule.endTime
+  );
+};
+
+deliveryRiderProfileSchema.methods.suspend = function (reason, suspendedBy) {
+  this.isSuspended = true;
+  this.suspensionReason = reason;
+  this.suspendedAt = new Date();
+  this.suspendedBy = suspendedBy;
+  this.status = "offline";
+  this.isAvailable = false;
+  return this.save();
+};
+
+deliveryRiderProfileSchema.methods.approve = function (approvedBy) {
+  this.isVerified = true;
+  this.approvedAt = new Date();
+  this.approvedBy = approvedBy;
+  return this.save();
+};
+
+// Static methods
+deliveryRiderProfileSchema.statics.findAvailableRiders = function (
+  latitude,
+  longitude,
+  maxDistance = 10000
+) {
+  return this.find({
+    isActive: true,
+    isVerified: true,
+    isSuspended: false,
+    isAvailable: true,
+    status: "online",
+    currentLocation: {
+      $near: {
+        $geometry: { type: "Point", coordinates: [longitude, latitude] },
+        $maxDistance: maxDistance,
+      },
+    },
+  }).populate("userId", "name phone");
+};
+
+deliveryRiderProfileSchema.statics.findByServiceArea = function (
+  city,
+  zipCode = null
+) {
+  const query = {
+    "serviceAreas.city": city,
+    isActive: true,
+    isVerified: true,
+    isSuspended: false,
+  };
+
+  if (zipCode) {
+    query["serviceAreas.zipCodes"] = zipCode;
+  }
+
+  return this.find(query).populate("userId", "name phone email");
+};
+
+deliveryRiderProfileSchema.statics.getTopPerformers = function (limit = 10) {
+  return this.find({
+    isActive: true,
+    isVerified: true,
+    isSuspended: false,
+    "stats.totalDeliveries": { $gte: 10 },
+  })
+    .sort({
+      "stats.averageRating": -1,
+      "stats.completionRate": -1,
+      "stats.onTimeDeliveryRate": -1,
+    })
+    .limit(limit)
+    .populate("userId", "name phone");
+};
+
+deliveryRiderProfileSchema.statics.getRiderAnalytics = function (
+  riderId,
+  startDate,
+  endDate
+) {
+  return this.aggregate([
+    { $match: { userId: mongoose.Types.ObjectId(riderId) } },
+    {
+      $lookup: {
+        from: "orders",
+        localField: "userId",
+        foreignField: "riderId",
+        pipeline: [
+          {
+            $match: {
+              createdAt: { $gte: startDate, $lte: endDate },
+              status: "delivered",
+            },
+          },
+        ],
+        as: "deliveredOrders",
+      },
+    },
+    {
+      $project: {
+        userId: 1,
+        stats: 1,
+        periodDeliveries: { $size: "$deliveredOrders" },
+        periodEarnings: { $sum: "$deliveredOrders.deliveryFee" },
+        periodTips: { $sum: "$deliveredOrders.tip" },
+      },
+    },
+  ]);
+};
+
+// Remove sensitive banking data when converting to JSON
+deliveryRiderProfileSchema.methods.toJSON = function () {
+  const rider = this.toObject();
+  if (rider.bankDetails) {
+    delete rider.bankDetails.accountNumber;
+    delete rider.bankDetails.routingNumber;
+  }
+  return rider;
+};
+
+const DeliveryRiderProfile = mongoose.model(
+  "DeliveryRiderProfile",
+  deliveryRiderProfileSchema
+);
+
+export default DeliveryRiderProfile;
