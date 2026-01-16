@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { Mic, PhoneOff, BellOff, PawPrint, DoorOpen, ShieldCheck, Check } from "lucide-react";
+import {
+  Mic,
+  PhoneOff,
+  BellOff,
+  PawPrint,
+  DoorOpen,
+  ShieldCheck,
+  Check,
+} from "lucide-react";
 
 const DeliveryInstructions = () => {
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -68,53 +76,54 @@ const DeliveryInstructions = () => {
   const isSelected = (optionId) => selectedOptions.includes(optionId);
 
   return (
-    <div className="mx-4 mb-32">
+    <div className="mx-3 mb-24">
       {/* Header */}
-      <h2 className="text-white font-semibold text-base mb-4">
+      <h2 className="text-white font-semibold text-sm mb-3">
         Delivery instructions
       </h2>
 
       {/* Horizontal Scrollable Options */}
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
         {options.map((option) => {
           const Icon = option.icon;
-          const selected = option.action === "record" ? isRecording : isSelected(option.id);
+          const selected =
+            option.action === "record" ? isRecording : isSelected(option.id);
 
           return (
             <button
               key={option.id}
               onClick={() => handleOptionClick(option)}
-              className="bg-black/20 backdrop-blur-sm rounded-2xl border border-white/10 p-4 min-w-[120px] shrink-0 transition-all duration-300 hover:border-white/20 relative"
+              className="bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 p-3 min-w-[100px] shrink-0 transition-all duration-300 hover:border-white/20 relative"
             >
               {/* Checkbox - Only show if showCheckbox is true */}
               {option.showCheckbox && (
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-2 right-2">
                   <div
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
                       selected
                         ? "bg-blue-300 border-blue-300"
                         : "border-white/30 bg-transparent"
                     }`}
                   >
-                    {selected && <Check className="w-3 h-3 text-black" />}
+                    {selected && <Check className="w-2 h-2 text-black" />}
                   </div>
                 </div>
               )}
 
               {/* Icon */}
-              <div className="flex justify-center mb-3">
-                <div className="p-3 rounded-xl bg-white/5">
-                  <Icon className="w-5 h-5 text-white/60" />
+              <div className="flex justify-center mb-2">
+                <div className="p-2 rounded-lg bg-white/5">
+                  <Icon className="w-4 h-4 text-white/60" />
                 </div>
               </div>
 
               {/* Label */}
               <div className="text-center">
-                <div className="text-white/80 text-xs font-medium">
+                <div className="text-white/80 text-[10px] font-medium">
                   {option.label}
                 </div>
                 {option.subtitle && (
-                  <div className="text-blue-300 text-[10px] font-medium mt-1">
+                  <div className="text-blue-300 text-[8px] font-medium mt-1">
                     {option.subtitle}
                   </div>
                 )}

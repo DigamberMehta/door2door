@@ -16,7 +16,8 @@ const RecommendedProducts = () => {
     {
       id: 2,
       name: "Love Beauty & Planet Argan oil and Lavender Shampoo",
-      image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
+      image:
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
       rating: 4.3,
       reviews: 852,
       price: 374,
@@ -32,7 +33,8 @@ const RecommendedProducts = () => {
     {
       id: 4,
       name: "Pantene Pro-V Advanced Hair Fall Solution Shampoo",
-      image: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=400",
+      image:
+        "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=400",
       rating: 4.4,
       reviews: 1892,
       price: 299,
@@ -48,7 +50,8 @@ const RecommendedProducts = () => {
     {
       id: 6,
       name: "L'Oréal Paris Total Repair 5 Shampoo",
-      image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
+      image:
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
       rating: 4.7,
       reviews: 2890,
       price: 449,
@@ -68,25 +71,25 @@ const RecommendedProducts = () => {
   };
 
   return (
-    <div className="bg-black/20 backdrop-blur-sm py-6 px-4 mb-6">
-      <h2 className="text-white font-semibold text-lg mb-4">
+    <div className="bg-black/20 backdrop-blur-sm py-4 px-3 mb-4">
+      <h2 className="text-white font-semibold text-sm mb-3">
         You might also like
       </h2>
-      
+
       {/* Grid Container - 3 items per row */}
-      <div className="grid grid-cols-3 gap-3 pb-2">
+      <div className="grid grid-cols-3 gap-2 pb-2">
         {products.map((product) => (
           <div
             key={product.id}
-            className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-3 relative flex flex-col"
+            className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col"
           >
             {/* Wishlist Button */}
             <button
               onClick={() => toggleWishlist(product.id)}
-              className="absolute top-5 right-5 z-10 p-1.5 bg-black/60 backdrop-blur-sm rounded-full hover:bg-black/80 transition-colors border border-white/10"
+              className="absolute top-3 right-3 z-10 p-1 bg-black/60 backdrop-blur-sm rounded-full hover:bg-black/80 transition-colors border border-white/10"
             >
               <Heart
-                className={`w-4 h-4 ${
+                className={`w-3 h-3 ${
                   wishlist.includes(product.id)
                     ? "fill-red-500 text-red-500"
                     : "text-white/60"
@@ -95,7 +98,7 @@ const RecommendedProducts = () => {
             </button>
 
             {/* Product Image */}
-            <div className="w-full aspect-square bg-white/5 rounded-xl overflow-hidden mb-3">
+            <div className="w-full aspect-square bg-white/5 rounded-lg overflow-hidden mb-2">
               <img
                 src={product.image}
                 alt={product.name}
@@ -105,7 +108,7 @@ const RecommendedProducts = () => {
 
             {/* Product Info */}
             <div className="flex flex-col flex-1">
-              <h3 className="text-white text-[10px] font-medium line-clamp-2 leading-snug h-7 mb-1">
+              <h3 className="text-white text-[8px] font-medium line-clamp-2 leading-snug h-6 mb-1">
                 {product.name}
               </h3>
 
@@ -115,7 +118,7 @@ const RecommendedProducts = () => {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-2 h-2 ${
+                      className={`w-1.5 h-1.5 ${
                         i < Math.floor(product.rating)
                           ? "fill-yellow-400 text-yellow-400"
                           : "text-white/20"
@@ -123,14 +126,14 @@ const RecommendedProducts = () => {
                     />
                   ))}
                 </div>
-                <span className="text-white/40 text-[8px]">
+                <span className="text-white/40 text-[6px]">
                   ({product.reviews})
                 </span>
               </div>
 
               {/* Price */}
-              <div className="mt-auto mb-2">
-                <span className="text-white font-bold text-sm">
+              <div className="mt-auto mb-1">
+                <span className="text-white font-bold text-xs">
                   ₹{product.price}
                 </span>
               </div>
@@ -138,7 +141,7 @@ const RecommendedProducts = () => {
               {/* Add Button */}
               <button
                 onClick={() => handleAddToCart(product)}
-                className="w-full py-1.5 border border-blue-300 text-blue-300 rounded-lg font-semibold text-[10px] hover:bg-blue-300 hover:text-black transition-all duration-300"
+                className="w-full py-1 border border-blue-300 text-blue-300 rounded-lg font-semibold text-[8px] hover:bg-blue-300 hover:text-black transition-all duration-300"
               >
                 ADD
               </button>
@@ -148,14 +151,14 @@ const RecommendedProducts = () => {
       </div>
 
       {/* See All Products Banner */}
-      <div className="mt-4 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 p-4 hover:border-white/20 transition-all cursor-pointer">
-        <div className="flex items-center justify-center gap-4">
+      <div className="mt-3 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 p-3 hover:border-white/20 transition-all cursor-pointer">
+        <div className="flex items-center justify-center gap-3">
           {/* Product Images Stack */}
           <div className="flex -space-x-2">
             {products.slice(0, 3).map((product, index) => (
               <div
                 key={product.id}
-                className="w-12 h-12 rounded-xl overflow-hidden border-2 border-black/40 bg-white/5"
+                className="w-8 h-8 rounded-lg overflow-hidden border-2 border-black/40 bg-white/5"
                 style={{ zIndex: 3 - index }}
               >
                 <img
@@ -169,11 +172,11 @@ const RecommendedProducts = () => {
 
           {/* See All Text */}
           <div className="flex items-center gap-2">
-            <span className="text-white font-semibold text-base">
+            <span className="text-white font-semibold text-sm">
               See all products
             </span>
             <svg
-              className="w-6 h-6 text-white"
+              className="w-4 h-4 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -193,4 +196,3 @@ const RecommendedProducts = () => {
 };
 
 export default RecommendedProducts;
-

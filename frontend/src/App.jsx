@@ -7,7 +7,7 @@ import {
 import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/StoreDetailPage";
 import FilterPage from "./pages/FilterPage";
-import CartPage from "./pages/cart/CartPage";
+import CheckoutPage from "./pages/checkout/CheckoutPage";
 
 // Wrapper component to provide navigation handlers
 function AppContent() {
@@ -72,7 +72,7 @@ function AppContent() {
           path="/stores"
           element={<FilterPage onStoreClick={handleStoreClick} />}
         />
-        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
         {/* 404 Route - redirect to home */}
         <Route
           path="*"

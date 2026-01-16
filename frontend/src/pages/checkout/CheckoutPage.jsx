@@ -7,7 +7,7 @@ import DeliveryInstructions from "./DeliveryInstructions";
 import CheckoutFooter from "./CheckoutFooter";
 import "./scrollbar.css";
 
-const CartPage = () => {
+const CheckoutPage = () => {
   const navigate = useNavigate();
 
   // Sample cart items - In real app, this would come from state management
@@ -18,7 +18,8 @@ const CartPage = () => {
       size: "2 x 200 ml",
       price: 597,
       quantity: 1,
-      image: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
+      image:
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400",
     },
     {
       id: 2,
@@ -26,7 +27,8 @@ const CartPage = () => {
       size: "1 x 500 g",
       price: 399,
       quantity: 2,
-      image: "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=400",
+      image:
+        "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=400",
     },
     {
       id: 3,
@@ -73,30 +75,30 @@ const CartPage = () => {
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-black/40 backdrop-blur-md border-b border-white/10">
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center justify-between px-3 py-2">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="p-1 hover:bg-white/10 rounded-full transition-colors"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-semibold">Checkout</h1>
+          <h1 className="text-lg font-semibold">Checkout</h1>
           <button
             onClick={handleShare}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="p-1 hover:bg-white/10 rounded-full transition-colors"
           >
-            <Share2 className="w-5 h-5 text-blue-300" />
+            <Share2 className="w-4 h-4 text-blue-300" />
           </button>
         </div>
       </div>
 
       {/* Cart Items */}
-      <div className="pb-32">
+      <div className="pb-24">
         {cartItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 px-4">
-            <div className="w-32 h-32 bg-white/5 rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center py-12 px-3">
+            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-3">
               <svg
-                className="w-16 h-16 text-white/30"
+                className="w-12 h-12 text-white/30"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -109,27 +111,27 @@ const CartPage = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-            <p className="text-white/60 text-center mb-6">
+            <h2 className="text-lg font-semibold mb-1">Your cart is empty</h2>
+            <p className="text-white/60 text-center mb-4 text-sm">
               Add items to your cart to get started
             </p>
             <button
               onClick={() => navigate("/")}
-              className="px-6 py-3 bg-blue-300 hover:bg-blue-400 text-black rounded-lg font-medium transition-colors"
+              className="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-black rounded-lg font-medium transition-colors text-sm"
             >
               Start Shopping
             </button>
           </div>
         ) : (
-          <div className="px-4 py-6 space-y-3">
+          <div className="px-3 py-3 space-y-2">
             {cartItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-4"
+                className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-3"
               >
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                   {/* Product Image */}
-                  <div className="w-20 h-20 bg-white/5 rounded-xl overflow-hidden shrink-0">
+                  <div className="w-16 h-16 bg-white/5 rounded-lg overflow-hidden shrink-0">
                     <img
                       src={item.image}
                       alt={item.name}
@@ -140,13 +142,13 @@ const CartPage = () => {
                   {/* Product Details */}
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                     <div>
-                      <h3 className="font-medium text-white mb-1 line-clamp-2 text-sm leading-snug">
+                      <h3 className="font-medium text-white mb-1 line-clamp-2 text-xs leading-snug">
                         {item.name}
                       </h3>
-                      <p className="text-xs text-white/60 mb-2">
+                      <p className="text-[10px] text-white/60 mb-1">
                         {item.size}
                       </p>
-                      <button className="text-xs text-white/60 hover:text-white/80 transition-colors">
+                      <button className="text-[10px] text-white/60 hover:text-white/80 transition-colors">
                         Move to wishlist
                       </button>
                     </div>
@@ -155,26 +157,26 @@ const CartPage = () => {
                   {/* Price and Quantity */}
                   <div className="flex flex-col items-end justify-between">
                     <div className="text-right">
-                      <div className="text-lg font-bold text-blue-300">
+                      <div className="text-base font-bold text-blue-300">
                         ₹{item.price}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-2 py-1">
+                    <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-1 py-1">
                       <button
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="text-white/60 hover:text-white transition-colors w-6 h-6 flex items-center justify-center"
+                        className="text-white/60 hover:text-white transition-colors w-5 h-5 flex items-center justify-center"
                         disabled={item.quantity <= 1}
                       >
-                        <Minus className="w-3 h-3" />
+                        <Minus className="w-2 h-2" />
                       </button>
-                      <span className="font-medium text-sm w-6 text-center text-blue-300">
+                      <span className="font-medium text-xs w-5 text-center text-blue-300">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="text-white/60 hover:text-white transition-colors w-6 h-6 flex items-center justify-center"
+                        className="text-white/60 hover:text-white transition-colors w-5 h-5 flex items-center justify-center"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-2 h-2" />
                       </button>
                     </div>
                   </div>
@@ -200,4 +202,4 @@ const CartPage = () => {
   );
 };
 
-export default CartPage;
+export default CheckoutPage;
