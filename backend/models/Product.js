@@ -66,8 +66,9 @@ const nutritionSchema = new mongoose.Schema({
   },
 });
 
-// Product specifications sub-schema (for non-food products)
+// Product specifications sub-schema (flexible for any product type)
 const specificationsSchema = new mongoose.Schema({
+  // Common basic fields (optional)
   brand: {
     type: String,
     trim: true,
@@ -78,6 +79,44 @@ const specificationsSchema = new mongoose.Schema({
     trim: true,
     maxlength: 100,
   },
+
+  // Flexible custom specifications - can handle any product type
+  customSpecs: [
+    {
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
+        // e.g., "Screen Size", "Fabric Type", "Author", "Voltage", etc.
+      },
+      value: {
+        type: mongoose.Schema.Types.Mixed, // Can be string, number, array, etc.
+        required: true,
+      },
+      unit: {
+        type: String,
+        trim: true,
+        maxlength: 20,
+        // e.g., "inches", "grams", "volts", "pages", etc.
+      },
+      dataType: {
+        type: String,
+        enum: ["string", "number", "boolean", "array", "object"],
+        default: "string",
+      },
+      isFilterable: {
+        type: Boolean,
+        default: true, // Can this spec be used for filtering?
+      },
+      displayOrder: {
+        type: Number,
+        default: 0, // Order to display specs
+      },
+    },
+  ],
+
+  // Legacy fixed fields (for backward compatibility)
   color: {
     type: String,
     trim: true,
@@ -184,6 +223,12 @@ const productSchema = new mongoose.Schema(
     },
 
     // Categorization
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: [true, "Category ID is required"],
+      index: true,
+    },
     category: {
       type: String,
       required: [true, "Category is required"],
@@ -419,7 +464,8 @@ const productSchema = new mongoose.Schema(
 
 // Compound indexes for performance
 productSchema.index({ storeId: 1, isActive: 1, isAvailable: 1 });
-productSchema.index({ categoryId: 1, subcategoryId: 1, isActive: 1 });
+productSchema.index({ categoryId: 1, subcategory: 1, isActive: 1 });
+productSchema.index({ categoryId: 1, isActive: 1 });
 productSchema.index({ price: 1, isActive: 1 });
 productSchema.index({ averageRating: -1, totalReviews: -1 });
 productSchema.index({ totalSold: -1, isActive: 1 });
@@ -481,6 +527,127 @@ productSchema.pre("save", function (next) {
 
   next();
 });
+
+// Instance methods
+productSchema.methods.populateCategory = function () {
+  return this.populate("categoryId", "name description icon image attributes");
+};
+// Method to add custom specification
+productSchema.methods.addCustomSpec = function (
+  name,
+  value,
+  unit = null,
+  dataType = "string",
+  isFilterable = true,
+  displayOrder = 0
+) {
+  if (!this.specifications) {
+    this.specifications = {};
+  }
+  if (!this.specifications.customSpecs) {
+    this.specifications.customSpecs = [];
+  }
+
+  // Remove existing spec with same name
+  this.specifications.customSpecs = this.specifications.customSpecs.filter(
+    (spec) => spec.name !== name
+  );
+
+  // Add new spec
+  this.specifications.customSpecs.push({
+    name,
+    value,
+    unit,
+    dataType,
+    isFilterable,
+    displayOrder,
+  });
+
+  // Sort by display order
+  this.specifications.customSpecs.sort(
+    (a, b) => a.displayOrder - b.displayOrder
+  );
+  return this;
+};
+
+// Method to get custom specification by name
+productSchema.methods.getCustomSpec = function (name) {
+  if (!this.specifications?.customSpecs) return null;
+  return this.specifications.customSpecs.find((spec) => spec.name === name);
+};
+
+// Method to get all filterable specs
+productSchema.methods.getFilterableSpecs = function () {
+  if (!this.specifications?.customSpecs) return [];
+  return this.specifications.customSpecs.filter((spec) => spec.isFilterable);
+};
+// Static methods
+productSchema.statics.findByCategory = function (categoryId, options = {}) {
+  return this.find({
+    categoryId,
+    isActive: true,
+    isAvailable: true,
+    ...options,
+  }).populate("categoryId", "name description icon image");
+};
+
+productSchema.statics.findWithCategories = function (
+  filter = {},
+  options = {}
+) {
+  return this.find(
+    {
+      isActive: true,
+      isAvailable: true,
+      ...filter,
+    },
+    null,
+    options
+  )
+    .populate("categoryId", "name description icon image attributes")
+    .populate(
+      "storeId",
+      "name averageRating deliveryFee estimatedDeliveryTime"
+    );
+};
+
+// Search products by custom specifications
+productSchema.statics.findByCustomSpecs = function (specs = {}, options = {}) {
+  const query = { isActive: true, isAvailable: true };
+
+  // Build query for custom specs
+  Object.entries(specs).forEach(([specName, specValue]) => {
+    query[`specifications.customSpecs`] = {
+      $elemMatch: {
+        name: specName,
+        value: specValue,
+      },
+    };
+  });
+
+  return this.find(query, null, options)
+    .populate("categoryId", "name description icon image")
+    .populate("storeId", "name averageRating deliveryFee");
+};
+
+// Get unique specification names for a category (for filters)
+productSchema.statics.getSpecificationsByCategory = function (categoryId) {
+  return this.aggregate([
+    { $match: { categoryId, isActive: true } },
+    { $unwind: "$specifications.customSpecs" },
+    {
+      $group: {
+        _id: "$specifications.customSpecs.name",
+        dataType: { $first: "$specifications.customSpecs.dataType" },
+        unit: { $first: "$specifications.customSpecs.unit" },
+        values: { $addToSet: "$specifications.customSpecs.value" },
+        count: { $sum: 1 },
+      },
+    },
+    { $match: { "specifications.customSpecs.isFilterable": true } },
+    { $sort: { count: -1 } },
+  ]);
+};
 
 const Product = mongoose.model("Product", productSchema);
 
