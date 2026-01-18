@@ -29,14 +29,25 @@ const Header = ({
   return (
     <header className="bg-black text-white sticky top-0 z-50 shadow-2xl">
       {/* Location Bar */}
-      <div className="relative px-4 pt-4 pb-3">
+      <div className="relative px-4 pt-4 pb-3 flex justify-between items-center">
         <div className="flex items-center gap-1.5 text-xs cursor-pointer transition-all duration-300 hover:opacity-80 group">
-          <HiOutlineLocationMarker className="text-base text-blue-300 transition-colors duration-300" />
+          <HiOutlineLocationMarker className="text-base text-[rgb(49,134,22)] transition-colors duration-300" />
           <span className="font-bold text-[11px] text-white">HOME - </span>
           <span className="font-normal text-[11px] text-white/90 truncate max-w-[200px]">
             {location}
           </span>
           <HiChevronDown className="text-sm ml-0.5 text-white transition-transform duration-300 group-hover:rotate-180" />
+        </div>
+        <div className="flex gap-1.5">
+          <button className="bg-white/10 backdrop-blur-sm border border-white/20 cursor-pointer p-2 rounded-xl transition-all duration-300 flex items-center justify-center hover:bg-white/20 hover:scale-105 hover:border-white/30 active:scale-95 group">
+            <HiOutlineBell className="text-lg text-white" />
+          </button>
+          <button
+            onClick={() => navigate("/setting")}
+            className="bg-white/10 backdrop-blur-sm border border-white/20 cursor-pointer p-2 rounded-xl transition-all duration-300 flex items-center justify-center hover:bg-white/20 hover:scale-105 hover:border-white/30 active:scale-95 group"
+          >
+            <HiOutlineUser className="text-lg text-white" />
+          </button>
         </div>
       </div>
 

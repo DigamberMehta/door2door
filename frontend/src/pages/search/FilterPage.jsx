@@ -52,12 +52,13 @@ const FilterPage = ({ onStoreClick }) => {
     } catch (error) {
       console.error("Error fetching stores:", error);
       // Fallback to central storesData if API fails
-      const filtered = storesData.filter(s => 
-        categoryName === "stores" || 
-        categoryName === "grocery" && s.category === "grocery" ||
-        categoryName === "snacks" && s.category === "food" ||
-        s.category === categoryName ||
-        categoryName === undefined
+      const filtered = storesData.filter(
+        (s) =>
+          categoryName === "stores" ||
+          (categoryName === "grocery" && s.category === "grocery") ||
+          (categoryName === "snacks" && s.category === "food") ||
+          s.category === categoryName ||
+          categoryName === undefined
       );
       setStores(filtered.length > 0 ? filtered : storesData);
     } finally {
@@ -118,7 +119,7 @@ const FilterPage = ({ onStoreClick }) => {
       <main className="px-2 pb-20">
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[rgb(49,134,22)] border-t-transparent"></div>
           </div>
         ) : (
           <div className="grid gap-1.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -136,7 +137,7 @@ const FilterPage = ({ onStoreClick }) => {
                     className="w-full h-full object-cover rounded-xl shadow-sm"
                   />
                   {store.offer && (
-                    <div className="absolute top-1 left-1 bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-lg border border-white/10">
+                    <div className="absolute top-1 left-1 bg-[rgb(49,134,22)] text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-lg border border-white/10">
                       {store.offer}
                     </div>
                   )}
@@ -149,11 +150,13 @@ const FilterPage = ({ onStoreClick }) => {
                   </h3>
 
                   <div className="flex items-center gap-1.5 text-[11px] mb-1">
-                    <div className="flex items-center gap-0.5 bg-blue-300 px-1 py-0.5 rounded text-blue-950 text-[10px] font-bold">
+                    <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-1 py-0.5 rounded text-white text-[10px] font-bold">
                       <MdStar className="text-[10px]" />
                       <span>{store.rating}</span>
                     </div>
-                    <span className="text-zinc-500 font-normal">({store.reviewCount || "1K+"})</span>
+                    <span className="text-zinc-500 font-normal">
+                      ({store.reviewCount || "1K+"})
+                    </span>
                   </div>
 
                   <p className="text-zinc-400 text-[11px] truncate mb-0.5 font-medium">

@@ -581,6 +581,42 @@ categorySchema.statics.getBreadcrumb = async function (categorySlug) {
   return await category.getFullPath();
 };
 
+// Instance method to get products in this category
+categorySchema.methods.getProducts = function(options = {}) {
+  const Product = mongoose.model('Product');
+  return Product.find({ 
+    categoryId: this._id, 
+    isActive: true, 
+    isAvailable: true,
+    ...options 
+  }).populate('storeId', 'name averageRating deliveryFee');
+};
+
+// Static method to get category with products
+categorySchema.statics.findWithProducts = function(filter = {}, options = {}) {
+  const Product = mongoose.model('Product');
+  return this.aggregate([
+    { $match: { isActive: true, ...filter } },
+    {
+      $lookup: {
+        from: 'products',
+        localField: '_id',
+        foreignField: 'categoryId',
+        as: 'products',
+        pipeline: [
+          { $match: { isActive: true, isAvailable: true } },
+          { $limit: options.productLimit || 10 }
+        ]
+      }
+    },
+    {
+      $addFields: {
+        productCount: { $size: '$products' }
+      }
+    }
+  ]);
+};
+
 const Category = mongoose.model("Category", categorySchema);
 
 export default Category;

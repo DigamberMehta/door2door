@@ -10,7 +10,10 @@ const StoreCard = ({ store, onStoreClick }) => {
       {/* Left Image Section */}
       <div className="relative w-24 h-24 flex-shrink-0">
         <img
-          src={store.image || "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80"}
+          src={
+            store.image ||
+            "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80"
+          }
           alt={store.name}
           className="w-full h-full object-cover rounded-xl shadow-sm"
         />
@@ -23,11 +26,13 @@ const StoreCard = ({ store, onStoreClick }) => {
         </h3>
 
         <div className="flex items-center gap-1.5 text-[11px] mb-1">
-          <div className="flex items-center gap-0.5 bg-blue-300 px-1 py-0.5 rounded text-blue-950 text-[10px] font-bold">
+          <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-1 py-0.5 rounded text-white text-[10px] font-bold">
             <MdStar className="text-[10px]" />
             <span>{store.rating}</span>
           </div>
-          <span className="text-zinc-500 font-normal">({store.reviewCount || "1K+"})</span>
+          <span className="text-zinc-500 font-normal">
+            ({store.reviewCount || "1K+"})
+          </span>
         </div>
 
         <p className="text-zinc-400 text-[11px] truncate mb-0.5 font-medium">

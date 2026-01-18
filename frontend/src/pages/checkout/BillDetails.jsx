@@ -57,7 +57,7 @@ const BillDetails = ({ cartItems }) => {
           <span className="text-white/80 text-xs">Delivery charge</span>
         </div>
         {isFreeDelivery ? (
-          <span className="text-blue-300 font-bold text-xs">FREE</span>
+          <span className="text-[rgb(49,134,22)] font-bold text-xs">FREE</span>
         ) : (
           <span className="text-white font-semibold text-sm">
             ₹{deliveryCharge}

@@ -8,7 +8,7 @@ const CheckoutFooter = ({ total }) => {
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2">
             <div className="p-1 bg-white/5 rounded-lg">
-              <MapPin className="w-4 h-4 text-blue-300" />
+              <MapPin className="w-4 h-4 text-[rgb(49,134,22)]" />
             </div>
             <div>
               <h3 className="text-white font-semibold text-xs mb-1">
@@ -19,7 +19,7 @@ const CheckoutFooter = ({ total }) => {
               </p>
             </div>
           </div>
-          <button className="text-blue-300 text-xs font-medium hover:text-blue-400 transition-colors">
+          <button className="text-[rgb(49,134,22)] text-xs font-medium hover:text-[rgb(49,134,22)]/80 transition-colors">
             Change
           </button>
         </div>
@@ -41,7 +41,7 @@ const CheckoutFooter = ({ total }) => {
         </button>
 
         {/* Place Order Button */}
-        <button className="flex-1 bg-blue-300 hover:bg-blue-400 text-black rounded-lg py-2 px-3 transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-blue-300/20 flex items-center justify-between">
+        <button className="flex-1 bg-[rgb(49,134,22)] hover:bg-[rgb(49,134,22)]/90 text-white rounded-lg py-2 px-3 transition-all duration-300 hover:scale-[1.02] shadow-lg shadow-[rgb(49,134,22)]/20 flex items-center justify-between">
           <div className="text-left">
             <div className="text-black/70 text-[10px]">TOTAL</div>
             <div className="text-black font-bold text-base">₹{total}</div>

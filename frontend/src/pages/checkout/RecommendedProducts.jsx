@@ -127,7 +127,7 @@ const RecommendedProducts = () => {
               {/* Add Button */}
               <button
                 onClick={() => handleAddToCart(product)}
-                className="w-full py-1 border border-blue-300 text-blue-300 rounded-lg font-semibold text-[8px] hover:bg-blue-300 hover:text-black transition-all duration-300"
+                className="w-full py-1 border border-[rgb(49,134,22)] text-[rgb(49,134,22)] rounded-lg font-semibold text-[8px] hover:bg-[rgb(49,134,22)] hover:text-white transition-all duration-300"
               >
                 ADD
               </button>
