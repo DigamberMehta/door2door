@@ -101,7 +101,7 @@ const DeliveryInstructions = () => {
                   <div
                     className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
                       selected
-                        ? "bg-blue-300 border-blue-300"
+                        ? "bg-[rgb(49,134,22)] border-[rgb(49,134,22)]"
                         : "border-white/30 bg-transparent"
                     }`}
                   >
@@ -123,7 +123,7 @@ const DeliveryInstructions = () => {
                   {option.label}
                 </div>
                 {option.subtitle && (
-                  <div className="text-blue-300 text-[8px] font-medium mt-1">
+                  <div className="text-[rgb(49,134,22)] text-[8px] font-medium mt-1">
                     {option.subtitle}
                   </div>
                 )}

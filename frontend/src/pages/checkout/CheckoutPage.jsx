@@ -87,7 +87,7 @@ const CheckoutPage = () => {
             onClick={handleShare}
             className="p-1 hover:bg-white/10 rounded-full transition-colors"
           >
-            <Share2 className="w-4 h-4 text-blue-300" />
+            <Share2 className="w-4 h-4 text-[rgb(49,134,22)]" />
           </button>
         </div>
       </div>
@@ -117,7 +117,7 @@ const CheckoutPage = () => {
             </p>
             <button
               onClick={() => navigate("/")}
-              className="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-black rounded-lg font-medium transition-colors text-sm"
+              className="px-4 py-2 bg-[rgb(49,134,22)] hover:bg-[rgb(49,134,22)]/90 text-white rounded-lg font-medium transition-colors text-sm"
             >
               Start Shopping
             </button>
@@ -157,7 +157,7 @@ const CheckoutPage = () => {
                   {/* Price and Quantity */}
                   <div className="flex flex-col items-end justify-between">
                     <div className="text-right">
-                      <div className="text-base font-bold text-blue-300">
+                      <div className="text-base font-bold text-[rgb(49,134,22)]">
                         ₹{item.price}
                       </div>
                     </div>
@@ -169,7 +169,7 @@ const CheckoutPage = () => {
                       >
                         <Minus className="w-2 h-2" />
                       </button>
-                      <span className="font-medium text-xs w-5 text-center text-blue-300">
+                      <span className="font-medium text-xs w-5 text-center text-[rgb(49,134,22)]">
                         {item.quantity}
                       </span>
                       <button

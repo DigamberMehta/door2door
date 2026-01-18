@@ -36,8 +36,8 @@ const Header = ({
           <span className="block text-[10px] font-medium text-white/90 mb-0.5 uppercase tracking-tight">
             Delivery in 10 minutes
           </span>
-          <div className="flex items-center gap-1.5 text-xs cursor-pointer transition-all duration-300 hover:text-blue-300 group">
-            <HiOutlineLocationMarker className="text-base text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
+          <div className="flex items-center gap-1.5 text-xs cursor-pointer transition-all duration-300 hover:text-[rgb(49,134,22)] group">
+            <HiOutlineLocationMarker className="text-base text-[rgb(49,134,22)] group-hover:text-[rgb(49,134,22)]/80 transition-colors duration-300" />
             <span className="font-bold text-[11px]">HOME - </span>
             <span className="font-normal text-[11px] truncate max-w-[200px]">
               {location}
@@ -49,7 +49,10 @@ const Header = ({
           <button className="bg-white/10 backdrop-blur-sm border border-white/20 cursor-pointer p-2 rounded-xl transition-all duration-300 flex items-center justify-center hover:bg-white/20 hover:scale-105 hover:border-white/30 active:scale-95 group">
             <HiOutlineBell className="text-lg text-white" />
           </button>
-          <button onClick={() => navigate("/setting")} className="bg-white/10 backdrop-blur-sm border border-white/20 cursor-pointer p-2 rounded-xl transition-all duration-300 flex items-center justify-center hover:bg-white/20 hover:scale-105 hover:border-white/30 active:scale-95 group">
+          <button
+            onClick={() => navigate("/setting")}
+            className="bg-white/10 backdrop-blur-sm border border-white/20 cursor-pointer p-2 rounded-xl transition-all duration-300 flex items-center justify-center hover:bg-white/20 hover:scale-105 hover:border-white/30 active:scale-95 group"
+          >
             <HiOutlineUser className="text-lg text-white" />
           </button>
         </div>
