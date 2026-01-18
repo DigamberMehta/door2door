@@ -4,6 +4,7 @@ import {
   Route,
   useNavigate,
 } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/store/StoreDetailPage";
 import StoreSearchPage from "./pages/store/StoreSearchPage";
@@ -12,6 +13,8 @@ import CheckoutPage from "./pages/checkout/CheckoutPage";
 import SettingsPage from "./pages/settings/SettingsPage";
 import SearchPage from "./pages/search/SearchPage";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
+import Login from "./pages/auth/Login";
+import SignUp from "./pages/auth/SignUp";
 
 // Wrapper component to provide navigation handlers
 function AppContent() {
@@ -81,7 +84,12 @@ function AppContent() {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/setting" element={<SettingsPage />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/product/:productName/info" element={<ProductDetailPage />} />
+        <Route
+          path="/product/:productName/info"
+          element={<ProductDetailPage />}
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
         {/* 404 Route - redirect to home */}
         <Route
           path="*"
@@ -100,7 +108,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }
