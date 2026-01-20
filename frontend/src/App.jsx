@@ -10,11 +10,13 @@ import StoreDetailPage from "./pages/store/StoreDetailPage";
 import StoreSearchPage from "./pages/store/StoreSearchPage";
 import FilterPage from "./pages/search/FilterPage";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
-import SettingsPage from "./pages/settings/SettingsPage";
+import ProfilePage from "./pages/profile/ProfilePage";
 import SearchPage from "./pages/search/SearchPage";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
+import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
+import AddressPage from "./pages/profile/AddressPage";
 
 // Wrapper component to provide navigation handlers
 function AppContent() {
@@ -82,7 +84,9 @@ function AppContent() {
           element={<FilterPage onStoreClick={handleStoreClick} />}
         />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/setting" element={<SettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/details" element={<ProfileDetailsPage />} />
+        <Route path="/profile/addresses" element={<AddressPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route
           path="/product/:productName/info"
