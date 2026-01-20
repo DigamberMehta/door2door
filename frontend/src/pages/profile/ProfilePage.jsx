@@ -1,4 +1,27 @@
-import { ChevronLeft, User, Phone, Mail } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  CreditCard,
+  Package,
+  Heart,
+  Gift,
+  Bell,
+  Palette,
+  Globe,
+  HelpCircle,
+  MessageCircle,
+  MessageSquare,
+  Info,
+  Star,
+  Share2,
+  FileText,
+  Shield,
+  LogOut,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -8,9 +31,8 @@ import OrdersSection from "./components/OrdersSection";
 import PreferencesSection from "./components/PreferencesSection";
 import SupportSection from "./components/SupportSection";
 import AboutSection from "./components/AboutSection";
-import SignOutButton from "./components/SignOutButton";
 
-const SettingsPage = () => {
+const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const [view, setView] = useState("main");
@@ -49,7 +71,7 @@ const SettingsPage = () => {
             <ChevronLeft className="w-5 h-5" />
           </button>
           <h1 className="text-sm font-semibold tracking-tight">
-            {view === "account" ? "Account Details" : "Settings"}
+            {view === "account" ? "Account Details" : "Profile"}
           </h1>
           <div className="w-8"></div>
         </div>
@@ -65,16 +87,31 @@ const SettingsPage = () => {
 
           {/* Settings Content */}
           <div className="px-3 pt-2 pb-4 space-y-4">
-            <AccountSection onProfileClick={() => setView("account")} />
+            <AccountSection
+              onProfileClick={() => navigate("/profile/details")}
+            />
             <OrdersSection />
             <PreferencesSection />
             <SupportSection />
             <AboutSection />
-            <SignOutButton
-              isAuthenticated={isAuthenticated}
-              isLoggingOut={isLoggingOut}
-              onLogout={handleLogout}
-            />
+
+            {/* Sign Out Button - Inlined */}
+            {isAuthenticated && (
+              <button
+                className="w-full bg-white/5 backdrop-blur-2xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left group"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 bg-white/5 rounded-lg border border-white/10">
+                    <LogOut className="w-4 h-4 text-white/60 group-active:text-white" />
+                  </div>
+                  <span className="text-white/70 font-medium text-xs">
+                    {isLoggingOut ? "Signing out..." : "Sign out"}
+                  </span>
+                </div>
+              </button>
+            )}
           </div>
         </>
       ) : (
@@ -125,24 +162,10 @@ const SettingsPage = () => {
               </div>
             </div>
           </div>
-
-          <button className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left group">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 bg-white/5 rounded-lg">
-                  <Lock className="w-4 h-4 text-white/70" />
-                </div>
-                <span className="text-white font-medium text-xs">
-                  Change Password
-                </span>
-              </div>
-              <ChevronRight className="w-3.5 h-3.5 text-white/30" />
-            </div>
-          </button>
         </div>
       )}
     </div>
   );
 };
 
-export default SettingsPage;
+export default ProfilePage;
