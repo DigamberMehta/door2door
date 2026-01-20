@@ -73,15 +73,15 @@ const deliveryAddressSchema = new mongoose.Schema({
     trim: true,
     maxlength: 100,
   },
-  state: {
+  province: {
     type: String,
-    required: [true, "State is required"],
+    required: [true, "Province is required"],
     trim: true,
     maxlength: 100,
   },
-  zipCode: {
+  postalCode: {
     type: String,
-    required: [true, "Zip code is required"],
+    required: [true, "Postal code is required"],
     trim: true,
     maxlength: 20,
   },
