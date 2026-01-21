@@ -9,7 +9,7 @@ import {
   MdLocalOffer,
   MdStorefront,
 } from "react-icons/md";
-import { storesData } from "../homepage/store/storesData";
+import { storeAPI } from "../../utils/api";
 
 const FilterPage = ({ onStoreClick }) => {
   const { categoryName } = useParams();
@@ -33,34 +33,27 @@ const FilterPage = ({ onStoreClick }) => {
   };
 
   useEffect(() => {
-    console.log("FilterPage category:", category);
-    if (category?.route) {
-      console.log("Fetching stores from:", category.route);
-      fetchStores(category.route);
+    const categorySlug = category?.slug || categoryName;
+    if (categorySlug) {
+      fetchStores(categorySlug);
     }
-  }, [category]);
+  }, [category, categoryName]);
 
-  const fetchStores = async (route) => {
-    console.log("Making API call to:", `http://localhost:5000${route}`);
+  const fetchStores = async (categorySlug) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000${route}`);
-      console.log("Response status:", response.status);
-      const data = await response.json();
-      console.log("Received data:", data);
-      setStores(data);
+      // Use the store API service to fetch stores by category
+      const response = await storeAPI.getByCategory(categorySlug);
+
+      // Response format: { success: true, data: [...] }
+      if (response.success && response.data) {
+        setStores(response.data);
+      } else {
+        setStores([]);
+      }
     } catch (error) {
       console.error("Error fetching stores:", error);
-      // Fallback to central storesData if API fails
-      const filtered = storesData.filter(
-        (s) =>
-          categoryName === "stores" ||
-          (categoryName === "grocery" && s.category === "grocery") ||
-          (categoryName === "snacks" && s.category === "food") ||
-          s.category === categoryName ||
-          categoryName === undefined
-      );
-      setStores(filtered.length > 0 ? filtered : storesData);
+      setStores([]);
     } finally {
       setLoading(false);
     }
@@ -125,14 +118,22 @@ const FilterPage = ({ onStoreClick }) => {
           <div className="grid gap-1.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {stores.map((store) => (
               <div
-                key={store.id}
+                key={store._id || store.id}
                 className="bg-white/5 backdrop-blur-sm rounded-2xl p-2.5 flex gap-3.5 cursor-pointer transition-all duration-300 hover:bg-white/10 border border-white/5 active:scale-[0.98]"
-                onClick={() => onStoreClick && onStoreClick(store)}
+                onClick={() => {
+                  const storeNameSlug = store.slug || store.name.toLowerCase().replace(/\\s+/g, "-");
+                  navigate(`/store/${storeNameSlug}`, { 
+                    state: { 
+                      store, 
+                      fromSubcategory: category.category || categoryName 
+                    } 
+                  });
+                }}
               >
                 {/* Left Image Section */}
                 <div className="relative w-24 h-24 flex-shrink-0">
                   <img
-                    src={store.image}
+                    src={store.logo}
                     alt={store.name}
                     className="w-full h-full object-cover rounded-xl shadow-sm"
                   />
@@ -149,23 +150,35 @@ const FilterPage = ({ onStoreClick }) => {
                     {store.name}
                   </h3>
 
-                  <div className="flex items-center gap-1.5 text-[11px] mb-1">
-                    <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-1 py-0.5 rounded text-white text-[10px] font-bold">
-                      <MdStar className="text-[10px]" />
-                      <span>{store.rating}</span>
+                  {store.stats?.averageRating && (
+                    <div className="flex items-center gap-1.5 text-[11px] mb-1">
+                      <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-1 py-0.5 rounded text-white text-[10px] font-bold">
+                        <MdStar className="text-[10px]" />
+                        <span>{store.stats.averageRating}</span>
+                      </div>
+                      {store.stats.totalReviews && (
+                        <span className="text-zinc-500 font-normal">
+                          ({store.stats.totalReviews})
+                        </span>
+                      )}
                     </div>
-                    <span className="text-zinc-500 font-normal">
-                      ({store.reviewCount || "1K+"})
-                    </span>
-                  </div>
+                  )}
 
                   <p className="text-zinc-400 text-[11px] truncate mb-0.5 font-medium">
-                    {store.categories?.slice(0, 2).join(", ")}
+                    {store.description ||
+                      store.categories
+                        ?.filter((c) => !c.includes("-"))
+                        .slice(0, 2)
+                        .join(", ")}
                   </p>
 
-                  <p className="text-zinc-500 text-[11px] truncate font-medium">
-                    {store.distance} • {store.deliveryTime}
-                  </p>
+                  {(store.distance || store.deliveryTime) && (
+                    <p className="text-zinc-500 text-[11px] truncate font-medium">
+                      {store.distance && <span>{store.distance}</span>}
+                      {store.distance && store.deliveryTime && <span> • </span>}
+                      {store.deliveryTime && <span>{store.deliveryTime}</span>}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
