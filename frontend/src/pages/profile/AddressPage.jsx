@@ -10,6 +10,7 @@ import {
   Home,
   Briefcase,
   Heart,
+  Navigation,
 } from "lucide-react";
 import { customerProfileAPI } from "../../utils/api";
 
@@ -21,13 +22,14 @@ const AddressPage = () => {
   const [error, setError] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const [formData, setFormData] = useState({
     label: "",
     street: "",
     city: "",
-    state: "",
-    zipCode: "",
+    province: "",
+    postalCode: "",
     country: "US",
     latitude: 0,
     longitude: 0,
@@ -59,13 +61,57 @@ const AddressPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setGettingLocation(true);
+    setError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+        setGettingLocation(false);
+      },
+      (error) => {
+        setGettingLocation(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setError(
+              "Location permission denied. Please enable location access in your browser settings.",
+            );
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setError("Location information is unavailable.");
+            break;
+          case error.TIMEOUT:
+            setError("Location request timed out.");
+            break;
+          default:
+            setError("An unknown error occurred while getting location.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
+    );
+  };
+
   const resetForm = () => {
     setFormData({
       label: "",
       street: "",
       city: "",
-      state: "",
-      zipCode: "",
+      province: "",
+      postalCode: "",
       country: "US",
       latitude: 0,
       longitude: 0,
@@ -81,8 +127,8 @@ const AddressPage = () => {
       label: address.label,
       street: address.street,
       city: address.city,
-      state: address.state,
-      zipCode: address.zipCode,
+      province: address.province,
+      postalCode: address.postalCode,
       country: address.country,
       latitude: address.latitude,
       longitude: address.longitude,
@@ -91,6 +137,14 @@ const AddressPage = () => {
     });
     setEditingId(address._id);
     setShowAddForm(true);
+  };
+
+  const handleAddNew = () => {
+    setShowAddForm(true);
+    // Automatically request location when opening add form
+    if (!editingId) {
+      getCurrentLocation();
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -102,7 +156,7 @@ const AddressPage = () => {
         // Update existing address
         const response = await customerProfileAPI.updateAddress(
           editingId,
-          formData
+          formData,
         );
         if (response.success) {
           setAddresses(response.data.addresses);
@@ -182,7 +236,7 @@ const AddressPage = () => {
             Saved Addresses
           </h1>
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={handleAddNew}
             className="p-1.5 -mr-1.5 active:bg-white/10 rounded-full transition-all"
           >
             <Plus className="w-5 h-5 text-[rgb(49,134,22)]" />
@@ -244,6 +298,14 @@ const AddressPage = () => {
                 />
               </div>
 
+              {/* Location Status */}
+              {gettingLocation && (
+                <div className="px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs flex items-center gap-2">
+                  <Navigation className="w-3 h-3 animate-pulse" />
+                  Getting your location...
+                </div>
+              )}
+ 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-white/40 text-[11px] mb-1.5 block">
@@ -260,30 +322,34 @@ const AddressPage = () => {
                 </div>
                 <div>
                   <label className="text-white/40 text-[11px] mb-1.5 block">
-                    State
+                    Province
                   </label>
                   <input
                     type="text"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
+                    value={formData.province}
+                    onChange={(e) =>
+                      handleInputChange("province", e.target.value)
+                    }
                     required
                     className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 outline-none border border-white/5 placeholder:text-white/30"
-                    placeholder="State"
+                    placeholder="Province"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="text-white/40 text-[11px] mb-1.5 block">
-                  Zip Code
+                  Postal Code
                 </label>
                 <input
                   type="text"
-                  value={formData.zipCode}
-                  onChange={(e) => handleInputChange("zipCode", e.target.value)}
+                  value={formData.postalCode}
+                  onChange={(e) =>
+                    handleInputChange("postalCode", e.target.value)
+                  }
                   required
                   className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 outline-none border border-white/5 placeholder:text-white/30"
-                  placeholder="Zip code"
+                  placeholder="Postal code"
                 />
               </div>
 
@@ -342,7 +408,7 @@ const AddressPage = () => {
             <MapPin className="w-12 h-12 text-white/20 mx-auto mb-3" />
             <p className="text-white/40 text-sm mb-4">No addresses saved yet</p>
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={handleAddNew}
               className="px-4 py-2 bg-[rgb(49,134,22)] text-white text-sm font-medium rounded-lg"
             >
               Add Your First Address

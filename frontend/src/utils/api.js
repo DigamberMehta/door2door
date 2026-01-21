@@ -11,4 +11,5 @@ export {
   categoryAPI,
   productAPI,
   storeAPI,
+  cartAPI,
 } from "../services/api";

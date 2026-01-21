@@ -11,3 +11,4 @@ export { customerProfileAPI } from "./profile.api";
 export { categoryAPI } from "./category.api";
 export { productAPI } from "./product.api";
 export { storeAPI } from "./store.api";
+export { default as cartAPI } from "./cart.api";

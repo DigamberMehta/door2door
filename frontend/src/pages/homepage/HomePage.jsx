@@ -8,11 +8,11 @@ import {
 } from "./subCategory";
 import { StoreList } from "./store";
 import { storeAPI, categoryAPI } from "../../utils/api";
+import { StoreListShimmer } from "../../components/shimmer";
 
 const HomePage = ({ onStoreClick, onCategoryClick }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [location, setLocation] = useState("Srishti, E512, Khajurla");
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,18 +22,29 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // API services return unwrapped data directly
-        const [storesData, categoriesData] = await Promise.all([
-          storeAPI.getAll({ limit: 50 }),
-          categoryAPI.getAll(),
-        ]);
 
-        setStores(Array.isArray(storesData) ? storesData : []);
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+        // Fetch stores and categories separately to prevent one failure from affecting the other
+        const storesResponse = await storeAPI.getAll({ limit: 50 });
+        if (storesResponse?.data && Array.isArray(storesResponse.data)) {
+          setStores(storesResponse.data);
+        }
+
+        // Fetch categories separately with its own error handling
+        try {
+          const categoriesResponse = await categoryAPI.getAll();
+          if (
+            categoriesResponse?.data &&
+            Array.isArray(categoriesResponse.data)
+          ) {
+            setCategories(categoriesResponse.data);
+          }
+        } catch (categoryError) {
+          console.error("Error fetching categories:", categoryError);
+          setCategories([]);
+        }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching stores:", error);
         setStores([]);
-        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -47,13 +58,13 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     const matchesCategory =
       selectedCategory === "All" ||
       store.categories?.some(
-        (cat) => cat.toLowerCase() === selectedCategory.toLowerCase()
+        (cat) => cat.toLowerCase() === selectedCategory.toLowerCase(),
       );
     const matchesSearch =
       store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       store.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       store.categories?.some((cat) =>
-        cat.toLowerCase().includes(searchQuery.toLowerCase())
+        cat.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     return matchesCategory && matchesSearch;
   });
@@ -65,7 +76,6 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         setSearchQuery={setSearchQuery}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
-        location={location}
       />
 
       <GroceryKitchenSection onCategoryClick={onCategoryClick} />
@@ -74,9 +84,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       <HomeLifestyleSection onCategoryClick={onCategoryClick} />
 
       {loading ? (
-        <div className="flex justify-center items-center py-10">
-          <div className="text-white">Loading stores...</div>
-        </div>
+        <StoreListShimmer />
       ) : (
         <StoreList
           stores={filteredStores}

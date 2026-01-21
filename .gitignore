@@ -41,4 +41,7 @@ Thumbs.db
 *.seed
 *.pid.lock
 /backend/init
+
+# Scripts folder
+/backend/scripts/
  

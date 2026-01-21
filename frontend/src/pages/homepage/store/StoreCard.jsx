@@ -11,6 +11,7 @@ const StoreCard = ({ store, onStoreClick }) => {
       <div className="relative w-24 h-24 flex-shrink-0">
         <img
           src={
+            store.logo ||
             store.image ||
             "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=400&q=80"
           }
@@ -28,19 +29,22 @@ const StoreCard = ({ store, onStoreClick }) => {
         <div className="flex items-center gap-1.5 text-[11px] mb-1">
           <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-1 py-0.5 rounded text-white text-[10px] font-bold">
             <MdStar className="text-[10px]" />
-            <span>{store.rating}</span>
+            <span>{store.stats?.averageRating || store.rating || "4.0"}</span>
           </div>
           <span className="text-zinc-500 font-normal">
-            ({store.reviewCount || "1K+"})
+            ({store.stats?.totalReviews || store.reviewCount || "1K+"})
           </span>
         </div>
 
         <p className="text-zinc-400 text-[11px] truncate mb-0.5 font-medium">
-          {store.tags.join(", ")}
+          {store.categories?.slice(0, 3).join(", ") ||
+            store.tags?.join(", ") ||
+            "Store"}
         </p>
 
         <p className="text-zinc-500 text-[11px] truncate font-medium">
-          {store.location || "Near Market"} • {store.distance}
+          {store.address?.city || store.location || "Near Market"} •{" "}
+          {store.distance || "2.5 km"}
         </p>
       </div>
     </div>

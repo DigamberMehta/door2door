@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   HiOutlineSearch,
@@ -9,15 +9,42 @@ import {
   HiChevronDown,
 } from "react-icons/hi";
 import { CategoryFilter } from "../pages/homepage/category";
+import { customerProfileAPI } from "../utils/api";
 
 const Header = ({
   searchQuery,
   setSearchQuery,
   selectedCategory,
   setSelectedCategory,
-  location = "Srishti, E512, Khajurla",
 }) => {
   const navigate = useNavigate();
+  const [addressData, setAddressData] = useState({
+    label: null,
+    address: null,
+  });
+
+  useEffect(() => {
+    fetchDefaultAddress();
+  }, []);
+
+  const fetchDefaultAddress = async () => {
+    try {
+      const response = await customerProfileAPI.getAddresses();
+      if (response.success) {
+        const defaultAddr = response.data.addresses?.find(
+          (addr) => addr._id === response.data.defaultAddress,
+        );
+        if (defaultAddr) {
+          setAddressData({
+            label: defaultAddr.label,
+            address: `${defaultAddr.street}, ${defaultAddr.city}`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error);
+    }
+  };
 
   return (
     <header className="bg-black/40 backdrop-blur-md border-b border-white/10 text-white sticky top-0 z-50 shadow-2xl">
@@ -26,15 +53,25 @@ const Header = ({
 
       <div className="relative flex justify-between items-center px-4 py-3">
         <div className="flex-1">
-          <span className="block text-xs md:text-sm font-medium text-white/90 mb-1">
-            Delivery in 10 minutes
-          </span>
-          <div className="flex items-center gap-2 text-xs md:text-sm cursor-pointer transition-all duration-300 hover:text-blue-300 group">
+          <div
+            className="flex items-center gap-2 text-xs md:text-sm cursor-pointer transition-all duration-300 hover:text-blue-300 group"
+            onClick={() => navigate("/profile/addresses")}
+          >
             <HiOutlineLocationMarker className="text-lg text-blue-400 group-hover:text-blue-300 transition-colors duration-300" />
-            <span className="font-bold text-xs">HOME - </span>
-            <span className="font-normal text-xs truncate max-w-[200px]">
-              {location}
-            </span>
+            {addressData.label && addressData.address ? (
+              <>
+                <span className="font-bold text-xs uppercase">
+                  {addressData.label} -{" "}
+                </span>
+                <span className="font-normal text-xs truncate max-w-[200px]">
+                  {addressData.address}
+                </span>
+              </>
+            ) : (
+              <span className="font-normal text-xs text-white/60">
+                Add delivery address
+              </span>
+            )}
             <HiChevronDown className="text-base ml-0.5 transition-transform duration-300 group-hover:rotate-180" />
           </div>
         </div>

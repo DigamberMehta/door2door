@@ -43,7 +43,7 @@ const attributeSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Category SEO sub-schema
@@ -73,7 +73,7 @@ const seoSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 // Main category schema
@@ -113,7 +113,6 @@ const categorySchema = new mongoose.Schema(
     },
     path: {
       type: String,
-      index: true,
       // e.g., "electronics/smartphones/android" or "food/pizza/italian"
     },
 
@@ -272,7 +271,7 @@ const categorySchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes for performance
@@ -428,7 +427,7 @@ categorySchema.statics.getRootCategories = function (businessType = null) {
 
 categorySchema.statics.getCategoryTree = async function (
   businessType = null,
-  maxDepth = 3
+  maxDepth = 3,
 ) {
   const query = {
     isActive: true,
@@ -470,7 +469,7 @@ categorySchema.statics.getCategoryTree = async function (
 
 categorySchema.statics.getFeaturedCategories = function (
   businessType = null,
-  limit = 10
+  limit = 10,
 ) {
   const query = {
     isFeatured: true,
@@ -490,7 +489,7 @@ categorySchema.statics.getFeaturedCategories = function (
 categorySchema.statics.searchCategories = function (
   searchTerm,
   businessType = null,
-  limit = 20
+  limit = 20,
 ) {
   const query = {
     $text: { $search: searchTerm },
@@ -530,7 +529,7 @@ categorySchema.statics.updateCategoryCounts = async function (categoryId) {
 
 categorySchema.statics.getPopularCategories = function (
   businessType = null,
-  limit = 10
+  limit = 10,
 ) {
   const query = {
     isActive: true,
@@ -582,38 +581,38 @@ categorySchema.statics.getBreadcrumb = async function (categorySlug) {
 };
 
 // Instance method to get products in this category
-categorySchema.methods.getProducts = function(options = {}) {
-  const Product = mongoose.model('Product');
-  return Product.find({ 
-    categoryId: this._id, 
-    isActive: true, 
+categorySchema.methods.getProducts = function (options = {}) {
+  const Product = mongoose.model("Product");
+  return Product.find({
+    categoryId: this._id,
+    isActive: true,
     isAvailable: true,
-    ...options 
-  }).populate('storeId', 'name averageRating deliveryFee');
+    ...options,
+  }).populate("storeId", "name averageRating deliveryFee");
 };
 
 // Static method to get category with products
-categorySchema.statics.findWithProducts = function(filter = {}, options = {}) {
-  const Product = mongoose.model('Product');
+categorySchema.statics.findWithProducts = function (filter = {}, options = {}) {
+  const Product = mongoose.model("Product");
   return this.aggregate([
     { $match: { isActive: true, ...filter } },
     {
       $lookup: {
-        from: 'products',
-        localField: '_id',
-        foreignField: 'categoryId',
-        as: 'products',
+        from: "products",
+        localField: "_id",
+        foreignField: "categoryId",
+        as: "products",
         pipeline: [
           { $match: { isActive: true, isAvailable: true } },
-          { $limit: options.productLimit || 10 }
-        ]
-      }
+          { $limit: options.productLimit || 10 },
+        ],
+      },
     },
     {
       $addFields: {
-        productCount: { $size: '$products' }
-      }
-    }
+        productCount: { $size: "$products" },
+      },
+    },
   ]);
 };
 

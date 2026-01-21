@@ -62,7 +62,7 @@ const RecommendedProducts = () => {
     setWishlist((prev) =>
       prev.includes(productId)
         ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
+        : [...prev, productId],
     );
   };
 
@@ -120,7 +120,7 @@ const RecommendedProducts = () => {
               {/* Price */}
               <div className="mt-auto mb-1">
                 <span className="text-white font-bold text-xs">
-                  ₹{product.price}
+                  R{product.price}
                 </span>
               </div>
 

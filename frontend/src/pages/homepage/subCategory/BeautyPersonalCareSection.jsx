@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SubCategorySection from "./SubCategorySection";
 import { categoryAPI } from "../../../utils/api";
+import { SubCategoryShimmer } from "../../../components/shimmer";
 
 const BeautyPersonalCareSection = ({ onCategoryClick }) => {
   const [beautyItems, setBeautyItems] = useState([]);
@@ -35,14 +36,7 @@ const BeautyPersonalCareSection = ({ onCategoryClick }) => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="py-6 px-4">
-        <h2 className="text-white text-xl font-semibold mb-4">
-          Beauty & Personal Care
-        </h2>
-        <div className="text-gray-400">Loading...</div>
-      </div>
-    );
+    return <SubCategoryShimmer />;
   }
 
   return (

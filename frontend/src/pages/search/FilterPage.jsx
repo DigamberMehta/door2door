@@ -10,6 +10,7 @@ import {
   MdStorefront,
 } from "react-icons/md";
 import { storeAPI } from "../../utils/api";
+import { FilterPageStoreShimmer } from "../../components/shimmer";
 
 const FilterPage = ({ onStoreClick }) => {
   const { categoryName } = useParams();
@@ -111,8 +112,10 @@ const FilterPage = ({ onStoreClick }) => {
       {/* Stores Grid */}
       <main className="px-2 pb-20">
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[rgb(49,134,22)] border-t-transparent"></div>
+          <div className="grid gap-1.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, index) => (
+              <FilterPageStoreShimmer key={index} />
+            ))}
           </div>
         ) : (
           <div className="grid gap-1.5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -121,12 +124,14 @@ const FilterPage = ({ onStoreClick }) => {
                 key={store._id || store.id}
                 className="bg-white/5 backdrop-blur-sm rounded-2xl p-2.5 flex gap-3.5 cursor-pointer transition-all duration-300 hover:bg-white/10 border border-white/5 active:scale-[0.98]"
                 onClick={() => {
-                  const storeNameSlug = store.slug || store.name.toLowerCase().replace(/\\s+/g, "-");
-                  navigate(`/store/${storeNameSlug}`, { 
-                    state: { 
-                      store, 
-                      fromSubcategory: category.category || categoryName 
-                    } 
+                  const storeNameSlug =
+                    store.slug ||
+                    store.name.toLowerCase().replace(/\\s+/g, "-");
+                  navigate(`/store/${storeNameSlug}`, {
+                    state: {
+                      store,
+                      fromSubcategory: category.category || categoryName,
+                    },
                   });
                 }}
               >

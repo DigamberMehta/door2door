@@ -64,7 +64,7 @@ const ProfilePage = () => {
           <button
             onClick={() => {
               if (view === "account") setView("main");
-              else navigate(-1);
+              else navigate("/");
             }}
             className="p-1.5 -ml-1.5 active:bg-white/10 rounded-full transition-all"
           >

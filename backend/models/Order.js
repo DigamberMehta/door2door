@@ -288,6 +288,13 @@ const orderSchema = new mongoose.Schema(
       required: [true, "Total is required"],
       min: [0, "Total cannot be negative"],
     },
+    currency: {
+      type: String,
+      default: "ZAR",
+      uppercase: true,
+      enum: ["ZAR"],
+      maxlength: 3,
+    },
 
     // Delivery information
     deliveryAddress: deliveryAddressSchema,
@@ -367,7 +374,7 @@ const orderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for performance
@@ -455,7 +462,7 @@ orderSchema.methods.addRating = function (ratingData) {
 orderSchema.statics.findByCustomer = function (
   customerId,
   page = 1,
-  limit = 10
+  limit = 10,
 ) {
   const skip = (page - 1) * limit;
   return this.find({ customerId })
@@ -523,7 +530,7 @@ orderSchema.statics.getOrderStats = function (storeId, startDate, endDate) {
 orderSchema.statics.findNearbyOrders = function (
   latitude,
   longitude,
-  maxDistance = 5000
+  maxDistance = 5000,
 ) {
   return this.find({
     status: { $in: ["ready_for_pickup", "picked_up"] },

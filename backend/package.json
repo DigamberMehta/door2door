@@ -12,7 +12,9 @@
     "lint:fix": "eslint . --fix",
     "seed": "node init/seed.js seed",
     "seed:clear": "node init/seed.js clear",
-    "seed:reset": "node init/seed.js clear && node init/seed.js seed"
+    "seed:reset": "node init/seed.js clear && node init/seed.js seed",
+    "migrate:currency": "node scripts/migrateCurrencyToZAR.js",
+    "update:seed-data": "node scripts/updateSeedDataCurrency.js"
   },
   "keywords": [
     "delivery",

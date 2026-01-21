@@ -110,8 +110,8 @@ export const addCustomerAddress = asyncHandler(async (req, res) => {
     label,
     street,
     city,
-    state,
-    zipCode,
+    province,
+    postalCode,
     country,
     latitude,
     longitude,
@@ -137,8 +137,8 @@ export const addCustomerAddress = asyncHandler(async (req, res) => {
     label,
     street,
     city,
-    state,
-    zipCode,
+    province,
+    postalCode,
     country: country || "US",
     latitude,
     longitude,
@@ -170,8 +170,8 @@ export const updateCustomerAddress = asyncHandler(async (req, res) => {
     label,
     street,
     city,
-    state,
-    zipCode,
+    province,
+    postalCode,
     country,
     latitude,
     longitude,
@@ -208,8 +208,8 @@ export const updateCustomerAddress = asyncHandler(async (req, res) => {
   if (label !== undefined) address.label = label;
   if (street !== undefined) address.street = street;
   if (city !== undefined) address.city = city;
-  if (state !== undefined) address.state = state;
-  if (zipCode !== undefined) address.zipCode = zipCode;
+  if (province !== undefined) address.province = province;
+  if (postalCode !== undefined) address.postalCode = postalCode;
   if (country !== undefined) address.country = country;
   if (latitude !== undefined) address.latitude = latitude;
   if (longitude !== undefined) address.longitude = longitude;
