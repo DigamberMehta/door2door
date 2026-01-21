@@ -9,6 +9,7 @@ import driverProfileRoutes from "./routes/driverProfileRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 
 // Load environment variables
@@ -27,7 +28,7 @@ app.use(
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,
-  })
+  }),
 );
 
 // Body parser middleware
@@ -36,7 +37,13 @@ app.use(express.urlencoded({ extended: true }));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.originalUrl} - ${new Date().toISOString()}`);
+  const now = new Date();
+  const istTime = new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "medium",
+    timeZone: "Asia/Kolkata",
+  }).format(now);
+  console.log(`${req.method} ${req.originalUrl} - ${istTime}`);
   next();
 });
 
@@ -70,6 +77,7 @@ app.get("/api/", (req, res) => {
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/stores", storeRoutes);
+app.use("/api/cart", cartRoutes);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);
@@ -84,7 +92,7 @@ app.use(errorHandler);
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(
-      process.env.MONGODB_URI || "mongodb://localhost:27017/door2door"
+      process.env.MONGODB_URI || "mongodb://localhost:27017/door2door",
     );
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
