@@ -12,7 +12,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { authAPI, customerProfileAPI } from "../../utils/api";
+import { authAPI, customerProfileAPI } from "../../services/api";
 
 const ProfileDetailsPage = () => {
   const navigate = useNavigate();

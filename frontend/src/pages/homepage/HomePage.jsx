@@ -7,7 +7,7 @@ import {
   HomeLifestyleSection,
 } from "./subCategory";
 import { StoreList } from "./store";
-import { storeAPI, categoryAPI } from "../../utils/api";
+import { storeAPI, categoryAPI } from "../../services/api";
 import { StoreListShimmer } from "../../components/shimmer";
 
 const HomePage = ({ onStoreClick, onCategoryClick }) => {

@@ -9,7 +9,7 @@ import {
   MdLocalOffer,
   MdStorefront,
 } from "react-icons/md";
-import { storeAPI } from "../../utils/api";
+import { storeAPI } from "../../services/api";
 import { FilterPageStoreShimmer } from "../../components/shimmer";
 
 const FilterPage = ({ onStoreClick }) => {

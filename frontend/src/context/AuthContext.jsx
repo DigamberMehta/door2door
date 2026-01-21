@@ -4,7 +4,7 @@ import {
   storeAuthData,
   getAuthData,
   clearAuthData,
-} from "../utils/api";
+} from "../services/api";
 
 const AuthContext = createContext(null);
 

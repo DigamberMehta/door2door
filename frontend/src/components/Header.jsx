@@ -9,7 +9,7 @@ import {
   HiChevronDown,
 } from "react-icons/hi";
 import { CategoryFilter } from "../pages/homepage/category";
-import { customerProfileAPI } from "../utils/api";
+import { customerProfileAPI } from "../services/api";
 
 const Header = ({
   searchQuery,

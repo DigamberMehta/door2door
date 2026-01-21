@@ -12,7 +12,7 @@ import {
   Heart,
   Navigation,
 } from "lucide-react";
-import { customerProfileAPI } from "../../utils/api";
+import { customerProfileAPI } from "../../services/api";
 
 const AddressPage = () => {
   const navigate = useNavigate();

@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
 import { Star } from "lucide-react";
 import toast from "react-hot-toast";
-import { storeAPI, productAPI, categoryAPI } from "../../utils/api";
+import { storeAPI, productAPI, categoryAPI } from "../../services/api";
 import cartAPI from "../../services/api/cart.api";
 import {
   StoreBannerShimmer,
