@@ -231,16 +231,16 @@ export const uploadDocument = asyncHandler(async (req, res) => {
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({ 
-      userId: req.user.id,
-      vehicle: {},
-      bankDetails: {},
-      documents: {},
+    deleteLocalFile(req.file.path);
+    return res.status(404).json({
+      success: false,
+      message: 'Profile not found. Please complete your profile first.',
     });
   }
 
-  // Check if document can be uploaded/updated
-  if (!profile.canUploadDocument(documentType)) {
+  // Check if document is already verified (prevent re-upload of verified documents)
+  const currentDoc = profile.documents?.[documentType];
+  if (currentDoc?.isVerified) {
     deleteLocalFile(req.file.path);
     return res.status(403).json({
       success: false,
@@ -270,11 +270,23 @@ export const uploadDocument = asyncHandler(async (req, res) => {
     const documentData = {
       imageUrl: uploadResult.url,
       cloudinaryPublicId: uploadResult.publicId,
+      isVerified: false, // Reset verification when new document uploaded
+      status: 'pending', // Set status to pending after upload
+      uploadedAt: new Date(),
+      rejectionReason: null, // Clear any previous rejection reason
       ...req.body, // Include any additional fields like number, expiryDate, etc.
     };
 
     // Update document in database
-    const updatedProfile = await profile.updateDocument(documentType, documentData);
+    if (!profile.documents) {
+      profile.documents = {};
+    }
+    profile.documents[documentType] = {
+      ...profile.documents[documentType],
+      ...documentData
+    };
+    profile.markModified('documents');
+    await profile.save();
 
     // Delete local file after successful upload
     deleteLocalFile(req.file.path);
@@ -284,7 +296,7 @@ export const uploadDocument = asyncHandler(async (req, res) => {
       message: 'Document uploaded successfully',
       data: { 
         documentType,
-        document: updatedProfile.documents?.[documentType] || {}
+        document: profile.documents[documentType]
       },
     });
   } catch (error) {
@@ -306,18 +318,66 @@ export const uploadDocument = asyncHandler(async (req, res) => {
 export const getDocumentsStatus = asyncHandler(async (req, res) => {
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
-  // If no profile exists, create one
+  // If no profile exists, return default documents status
   if (!profile) {
-    profile = await DeliveryRiderProfile.create({
-      userId: req.user.id,
-      vehicle: {},
-      bankDetails: {},
-      documents: {},
+    const defaultDocs = {};
+    const docTypes = [
+      'profilePhoto', 'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
+      'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense', 
+      'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
+    ];
+    
+    docTypes.forEach(docType => {
+      defaultDocs[docType] = {
+        uploaded: false,
+        status: 'not_uploaded',
+        canReupload: true,
+        isVerified: false,
+        imageUrl: null
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: { 
+        documents: defaultDocs,
+        allVerified: false,
+      },
     });
   }
 
-  const documentsStatus = profile.getAllDocumentsStatus();
-  const allVerified = profile.areAllDocumentsVerified();
+  // Prepare documents status for all document types
+  const docTypes = [
+    'profilePhoto', 'vehiclePhoto', 'idDocument', 'workPermit', 'driversLicence',
+    'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense', 
+    'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
+  ];
+
+  const documentsStatus = {};
+  
+  docTypes.forEach(docType => {
+    const doc = profile.documents?.[docType];
+    documentsStatus[docType] = {
+      uploaded: !!doc?.imageUrl,
+      status: doc?.status || 'not_uploaded',
+      canReupload: doc?.status !== 'verified', // Can't reupload verified docs
+      isVerified: doc?.isVerified || false,
+      imageUrl: doc?.imageUrl || null,
+      rejectionReason: doc?.rejectionReason || null,
+      uploadedAt: doc?.uploadedAt || null,
+    };
+  });
+
+  // Check if all required documents are verified
+  const requiredDocs = [
+    'profilePhoto', 'vehiclePhoto', 'idDocument', 'driversLicence',
+    'proofOfBankingDetails', 'proofOfAddress', 'vehicleLicense',
+    'thirdPartyInsurance', 'vehicleAssessment', 'carrierAgreement'
+  ];
+  
+  const allVerified = requiredDocs.every(docType => 
+    documentsStatus[docType]?.isVerified === true
+  );
 
   res.json({
     success: true,
@@ -410,7 +470,7 @@ export const rejectDocument = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Update availability schedule
+ * @desc    Update availability schedule (daily shift times)
  * @route   PUT /api/driver-profile/availability
  * @access  Private (Delivery Rider)
  */
@@ -428,7 +488,13 @@ export const updateAvailability = asyncHandler(async (req, res) => {
   }
 
   if (isAvailable !== undefined) profile.isAvailable = isAvailable;
-  if (workSchedule !== undefined) profile.workSchedule = workSchedule;
+  
+  // Handle workSchedule - array of shift time strings (e.g., ["07:00 AM - 08:00 AM"])
+  // User can change these daily as needed
+  if (workSchedule !== undefined) {
+    profile.set('workSchedule', workSchedule);
+    profile.markModified('workSchedule');
+  }
 
   await profile.save();
 
@@ -513,7 +579,7 @@ export const getDriverStats = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Update preferred work areas
+ * @desc    Update preferred work areas (service areas)
  * @route   PUT /api/driver-profile/work-areas
  * @access  Private (Delivery Rider)
  */
@@ -537,13 +603,15 @@ export const updateWorkAreas = asyncHandler(async (req, res) => {
     });
   }
 
-  profile.preferredWorkAreas = preferredWorkAreas;
+  // Store as serviceAreas (simple array of area names)
+  profile.set('serviceAreas', preferredWorkAreas);
+  profile.markModified('serviceAreas');
   await profile.save();
 
   res.json({
     success: true,
     message: 'Preferred work areas updated successfully',
-    data: { preferredWorkAreas: profile.preferredWorkAreas },
+    data: { serviceAreas: profile.serviceAreas },
   });
 });
 
@@ -575,7 +643,7 @@ export const getBankAccount = asyncHandler(async (req, res) => {
  * @access  Private (Delivery Rider)
  */
 export const updateBankAccount = asyncHandler(async (req, res) => {
-  const { accountHolderName, accountNumber, bankName, branchCode, accountType } = req.body;
+  const { accountHolderName, accountNumber, bankName, branchCode, routingNumber, accountType } = req.body;
 
   let profile = await DeliveryRiderProfile.findOne({ userId: req.user.id });
 
@@ -597,6 +665,7 @@ export const updateBankAccount = asyncHandler(async (req, res) => {
   if (accountNumber !== undefined) profile.bankDetails.accountNumber = accountNumber;
   if (bankName !== undefined) profile.bankDetails.bankName = bankName;
   if (branchCode !== undefined) profile.bankDetails.branchCode = branchCode;
+  if (routingNumber !== undefined) profile.bankDetails.routingNumber = routingNumber;
   if (accountType !== undefined) profile.bankDetails.accountType = accountType;
 
   profile.markModified('bankDetails');
