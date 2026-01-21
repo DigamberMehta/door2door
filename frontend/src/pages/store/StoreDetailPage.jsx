@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineArrowLeft, HiOutlineSearch } from "react-icons/hi";
 import { Star } from "lucide-react";
+import toast from "react-hot-toast";
 import { storeAPI, productAPI, categoryAPI } from "../../utils/api";
+import cartAPI from "../../services/api/cart.api";
+import {
+  StoreBannerShimmer,
+  ProductGridShimmer,
+} from "../../components/shimmer";
 
 const StoreDetailPage = () => {
   const { storeName } = useParams();
@@ -11,7 +17,34 @@ const StoreDetailPage = () => {
   const [store, setStore] = useState(location.state?.store || null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cartItems, setCartItems] = useState(new Set());
   const fromSubcategory = location.state?.fromSubcategory;
+
+  // Fetch cart items
+  const fetchCartItems = async () => {
+    try {
+      const response = await cartAPI.getCart();
+      const cart = response?.data || response;
+      const productIds = new Set(
+        cart?.items?.map((item) => item.productId?._id || item.productId) || [],
+      );
+      setCartItems(productIds);
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCartItems();
+
+    // Listen for cart updates
+    const handleCartUpdate = () => fetchCartItems();
+    window.addEventListener("cartUpdated", handleCartUpdate);
+
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchStoreData = async () => {
@@ -34,7 +67,7 @@ const StoreDetailPage = () => {
             storeData._id || storeData.id,
             {
               limit: 50,
-            }
+            },
           );
 
           if (productsResponse.success && productsResponse.data) {
@@ -53,6 +86,55 @@ const StoreDetailPage = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleAddToCart = async (product, e) => {
+    e.stopPropagation();
+
+    try {
+      await cartAPI.addToCart({
+        productId: product._id || product.id,
+        storeId: store._id || store.id,
+        quantity: 1,
+      });
+
+      // Trigger cart update
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+
+      // Show success toast
+      toast.success("Added to cart!", {
+        duration: 2000,
+        position: "top-center",
+        style: {
+          background: "#1a1a1a",
+          color: "#fff",
+          border: "1px solid rgba(49,134,22,0.3)",
+        },
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      if (error.response?.data?.code === "DIFFERENT_STORE") {
+        toast.error(error.response.data.message, {
+          duration: 3000,
+          position: "top-center",
+          style: {
+            background: "#1a1a1a",
+            color: "#fff",
+            border: "1px solid rgba(239,68,68,0.3)",
+          },
+        });
+      } else {
+        toast.error("Failed to add to cart", {
+          duration: 2000,
+          position: "top-center",
+          style: {
+            background: "#1a1a1a",
+            color: "#fff",
+            border: "1px solid rgba(239,68,68,0.3)",
+          },
+        });
+      }
+    }
   };
 
   // Group products by subcategory
@@ -76,10 +158,27 @@ const StoreDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg">Loading store...</div>
+      <div className="min-h-screen bg-black text-white pb-20">
+        {/* Header with Back Button */}
+        <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10 px-2 py-3">
+          <button
+            onClick={handleBack}
+            className="p-2 -ml-1 active:bg-white/10 rounded-full transition-all"
+          >
+            <HiOutlineArrowLeft className="w-6 h-6 outline-none" />
+          </button>
         </div>
+
+        {/* Store Banner Shimmer */}
+        <StoreBannerShimmer />
+
+        {/* Search Bar Shimmer */}
+        <div className="px-2 pt-4">
+          <div className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 h-10"></div>
+        </div>
+
+        {/* Products Shimmer */}
+        <ProductGridShimmer />
       </div>
     );
   }
@@ -225,10 +324,10 @@ const StoreDetailPage = () => {
                     className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-95"
                     onClick={() =>
                       navigate(
-                        `/product/${
+                        `/product/${product._id || product.id}/${
                           product.slug ||
                           product.name.toLowerCase().replace(/\s+/g, "-")
-                        }/info`
+                        }`,
                       )
                     }
                   >
@@ -264,7 +363,7 @@ const StoreDetailPage = () => {
                               className={`w-2 h-2 ${
                                 i <
                                 Math.floor(
-                                  product.averageRating || product.rating || 0
+                                  product.averageRating || product.rating || 0,
                                 )
                                   ? "fill-yellow-400 text-yellow-400"
                                   : "text-white/20"
@@ -280,16 +379,19 @@ const StoreDetailPage = () => {
                       {/* Price & Add Button */}
                       <div className="mt-auto">
                         <div className="text-white font-bold text-xs mb-1.5">
-                          ₹{product.price}
+                          R{product.price}
                         </div>
                         <button
-                          className="w-full py-1 border border-[rgb(49,134,22)] text-[rgb(49,134,22)] rounded-md font-semibold text-[9px] active:bg-[rgb(49,134,22)] active:text-white transition-all"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Add to cart logic
-                          }}
+                          className={`w-full py-1 border rounded-md font-semibold text-[9px] transition-all ${
+                            cartItems.has(product._id || product.id)
+                              ? "bg-[rgb(49,134,22)] border-[rgb(49,134,22)] text-white"
+                              : "border-[rgb(49,134,22)] text-[rgb(49,134,22)] active:bg-[rgb(49,134,22)] active:text-white"
+                          }`}
+                          onClick={(e) => handleAddToCart(product, e)}
                         >
-                          ADD
+                          {cartItems.has(product._id || product.id)
+                            ? "ADDED"
+                            : "ADD"}
                         </button>
                       </div>
                     </div>

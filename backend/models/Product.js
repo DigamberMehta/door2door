@@ -170,12 +170,10 @@ const inventorySchema = new mongoose.Schema({
     type: String,
     trim: true,
     uppercase: true,
-    index: true,
   },
   barcode: {
     type: String,
     trim: true,
-    index: true,
   },
   batchNumber: {
     type: String,
@@ -279,6 +277,13 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Tax rate cannot be negative"],
       max: [50, "Tax rate cannot exceed 50%"],
+    },
+    currency: {
+      type: String,
+      default: "ZAR",
+      uppercase: true,
+      enum: ["ZAR"],
+      maxlength: 3,
     },
 
     // Product Media
@@ -459,7 +464,7 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound indexes for performance
@@ -503,7 +508,7 @@ productSchema.pre("save", function (next) {
   // Calculate discount if original price is set
   if (this.originalPrice && this.originalPrice > this.price) {
     this.discount = Math.round(
-      ((this.originalPrice - this.price) / this.originalPrice) * 100
+      ((this.originalPrice - this.price) / this.originalPrice) * 100,
     );
   }
 
@@ -539,7 +544,7 @@ productSchema.methods.addCustomSpec = function (
   unit = null,
   dataType = "string",
   isFilterable = true,
-  displayOrder = 0
+  displayOrder = 0,
 ) {
   if (!this.specifications) {
     this.specifications = {};
@@ -550,7 +555,7 @@ productSchema.methods.addCustomSpec = function (
 
   // Remove existing spec with same name
   this.specifications.customSpecs = this.specifications.customSpecs.filter(
-    (spec) => spec.name !== name
+    (spec) => spec.name !== name,
   );
 
   // Add new spec
@@ -565,7 +570,7 @@ productSchema.methods.addCustomSpec = function (
 
   // Sort by display order
   this.specifications.customSpecs.sort(
-    (a, b) => a.displayOrder - b.displayOrder
+    (a, b) => a.displayOrder - b.displayOrder,
   );
   return this;
 };
@@ -593,7 +598,7 @@ productSchema.statics.findByCategory = function (categoryId, options = {}) {
 
 productSchema.statics.findWithCategories = function (
   filter = {},
-  options = {}
+  options = {},
 ) {
   return this.find(
     {
@@ -602,12 +607,12 @@ productSchema.statics.findWithCategories = function (
       ...filter,
     },
     null,
-    options
+    options,
   )
     .populate("categoryId", "name description icon image attributes")
     .populate(
       "storeId",
-      "name averageRating deliveryFee estimatedDeliveryTime"
+      "name averageRating deliveryFee estimatedDeliveryTime",
     );
 };
 

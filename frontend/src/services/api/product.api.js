@@ -15,11 +15,12 @@ export const productAPI = {
   },
 
   /**
-   * Get product by ID or slug
-   * @param {string} identifier - Product ID or slug
+   * Get product by ID and slug
+   * @param {string} id - Product ID
+   * @param {string} slug - Product slug
    */
-  getById: async (identifier) => {
-    const response = await apiClient.get(`/products/${identifier}`);
+  getById: async (id, slug) => {
+    const response = await apiClient.get(`/products/${id}/${slug}`);
     return response; // Return full response with { success, data }
   },
 
@@ -116,3 +117,5 @@ export const productAPI = {
     return response; // Return full response with { success, data }
   },
 };
+
+export default productAPI;

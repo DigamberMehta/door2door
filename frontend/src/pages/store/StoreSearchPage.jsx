@@ -147,7 +147,7 @@ const StoreSearchPage = () => {
   const filteredProducts = allProducts.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.weight.toLowerCase().includes(searchQuery.toLowerCase())
+      product.weight.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (!store) {
@@ -229,9 +229,10 @@ const StoreSearchPage = () => {
                 style={{ animationDelay: `${index * 30}ms` }}
                 onClick={() =>
                   navigate(
-                    `/product/${product.name
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}/info`
+                    `/product/${product._id || product.id}/${
+                      product.slug ||
+                      product.name.toLowerCase().replace(/\s+/g, "-")
+                    }`,
                   )
                 }
               >
@@ -276,7 +277,7 @@ const StoreSearchPage = () => {
                   {/* Price & Add Button */}
                   <div className="mt-auto">
                     <div className="text-white font-bold text-xs mb-1.5">
-                      ₹{product.price}
+                      R{product.price}
                     </div>
                     <button
                       className="w-full py-1 border border-[rgb(49,134,22)] text-[rgb(49,134,22)] rounded-md font-semibold text-[9px] active:bg-[rgb(49,134,22)] active:text-white transition-all"

@@ -4,6 +4,7 @@ import {
   Route,
   useNavigate,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import HomePage from "./pages/homepage/HomePage";
 import StoreDetailPage from "./pages/store/StoreDetailPage";
@@ -17,6 +18,7 @@ import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import ProfileDetailsPage from "./pages/profile/ProfileDetailsPage";
 import AddressPage from "./pages/profile/AddressPage";
+import FloatingCartButton from "./components/FloatingCartButton";
 
 // Wrapper component to provide navigation handlers
 function AppContent() {
@@ -87,11 +89,8 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/details" element={<ProfileDetailsPage />} />
         <Route path="/profile/addresses" element={<AddressPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route
-          path="/product/:productName/info"
-          element={<ProductDetailPage />}
-        />
+        <Route path="/search\" element={<SearchPage />} />
+        <Route path="/product/:id/:slug" element={<ProductDetailPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         {/* 404 Route - redirect to home */}
@@ -105,6 +104,12 @@ function AppContent() {
           }
         />
       </Routes>
+
+      {/* Toast Notifications */}
+      <Toaster />
+
+      {/* Floating Cart Button - Shows on all pages */}
+      <FloatingCartButton />
     </div>
   );
 }

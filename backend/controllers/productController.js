@@ -18,8 +18,8 @@ export const getProducts = asyncHandler(async (req, res) => {
     onSale,
     minPrice,
     maxPrice,
-    sortBy = 'createdAt',
-    order = 'desc',
+    sortBy = "createdAt",
+    order = "desc",
   } = req.query;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -35,10 +35,10 @@ export const getProducts = asyncHandler(async (req, res) => {
   if (storeId) {
     query.storeId = storeId;
   }
-  if (featured === 'true') {
+  if (featured === "true") {
     query.isFeatured = true;
   }
-  if (onSale === 'true') {
+  if (onSale === "true") {
     query.isOnSale = true;
     query.saleEndDate = { $gte: new Date() };
   }
@@ -50,11 +50,11 @@ export const getProducts = asyncHandler(async (req, res) => {
 
   // Sort
   const sortOptions = {};
-  sortOptions[sortBy] = order === 'asc' ? 1 : -1;
+  sortOptions[sortBy] = order === "asc" ? 1 : -1;
 
   const [products, total] = await Promise.all([
     Product.find(query)
-      .select('-__v')
+      .select("-__v")
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit)),
@@ -74,17 +74,25 @@ export const getProducts = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc Get product by ID or slug
- * @route GET /api/products/:identifier
+ * @desc Get product by ID and slug
+ * @route GET /api/products/:id/:slug
  * @access Public
  */
 export const getProductById = asyncHandler(async (req, res) => {
-  const { identifier } = req.params;
+  const { id, slug } = req.params;
 
-  // Try to find by ID first, then by slug
-  let product = await Product.findById(identifier);
+  // Validate MongoDB ObjectId format
+  if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid ID format",
+    });
+  }
+
+  // Find by ID and optionally verify slug
+  let product = await Product.findById(id);
   if (!product) {
-    product = await Product.findOne({ slug: identifier });
+    product = await Product.findOne({ slug });
   }
 
   if (!product) {
@@ -107,7 +115,12 @@ export const getProductById = asyncHandler(async (req, res) => {
  */
 export const getProductsByCategory = asyncHandler(async (req, res) => {
   const { slug } = req.params;
-  const { page = 1, limit = 20, sortBy = 'averageRating', order = 'desc' } = req.query;
+  const {
+    page = 1,
+    limit = 20,
+    sortBy = "averageRating",
+    order = "desc",
+  } = req.query;
 
   // Find category
   const category = await Category.findOne({ slug, isActive: true });
@@ -126,11 +139,11 @@ export const getProductsByCategory = asyncHandler(async (req, res) => {
   };
 
   const sortOptions = {};
-  sortOptions[sortBy] = order === 'asc' ? 1 : -1;
+  sortOptions[sortBy] = order === "asc" ? 1 : -1;
 
   const [products, total] = await Promise.all([
     Product.find(query)
-      .select('-__v')
+      .select("-__v")
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit)),
@@ -167,7 +180,7 @@ export const getFeaturedProducts = asyncHandler(async (req, res) => {
     isActive: true,
     isAvailable: true,
   })
-    .select('-__v')
+    .select("-__v")
     .sort({ averageRating: -1, totalSold: -1 })
     .limit(parseInt(limit));
 
@@ -195,7 +208,7 @@ export const getProductsOnSale = asyncHandler(async (req, res) => {
 
   const [products, total] = await Promise.all([
     Product.find(query)
-      .select('-__v')
+      .select("-__v")
       .sort({ discount: -1, averageRating: -1 })
       .skip(skip)
       .limit(parseInt(limit)),
@@ -230,7 +243,7 @@ export const searchProducts = asyncHandler(async (req, res) => {
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
-  const searchRegex = new RegExp(q, 'i');
+  const searchRegex = new RegExp(q, "i");
 
   const query = {
     isActive: true,
@@ -247,7 +260,7 @@ export const searchProducts = asyncHandler(async (req, res) => {
 
   const [products, total] = await Promise.all([
     Product.find(query)
-      .select('-__v')
+      .select("-__v")
       .sort({ averageRating: -1, totalSold: -1 })
       .skip(skip)
       .limit(parseInt(limit)),

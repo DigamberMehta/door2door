@@ -15,7 +15,7 @@ router.get("/search", searchProducts);
 router.get("/featured", getFeaturedProducts);
 router.get("/on-sale", getProductsOnSale);
 router.get("/category/:slug", getProductsByCategory);
-router.get("/:identifier", getProductById);
+router.get("/:id/:slug", getProductById);
 router.get("/", getProducts);
 
 export default router;
