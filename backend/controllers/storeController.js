@@ -1,4 +1,5 @@
 import Store from "../models/Store.js";
+import mongoose from "mongoose";
 import { asyncHandler } from "../middleware/validation.js";
 
 /**
@@ -13,8 +14,8 @@ export const getStores = asyncHandler(async (req, res) => {
     category,
     isOpen,
     featured,
-    sortBy = 'rating',
-    order = 'desc',
+    sortBy = "rating",
+    order = "desc",
   } = req.query;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -24,20 +25,20 @@ export const getStores = asyncHandler(async (req, res) => {
   if (category) {
     query.categories = { $in: [category] };
   }
-  if (isOpen === 'true') {
+  if (isOpen === "true") {
     query.isOpen = true;
   }
-  if (featured === 'true') {
+  if (featured === "true") {
     query.isFeatured = true;
   }
 
   // Sort
   const sortOptions = {};
-  sortOptions[sortBy] = order === 'asc' ? 1 : -1;
+  sortOptions[sortBy] = order === "asc" ? 1 : -1;
 
   const [stores, total] = await Promise.all([
     Store.find(query)
-      .select('-__v')
+      .select("-__v")
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit)),
@@ -64,13 +65,19 @@ export const getStores = asyncHandler(async (req, res) => {
 export const getStoreById = asyncHandler(async (req, res) => {
   const { identifier } = req.params;
 
-  // Try to find by ID first, then by slug
-  let store = await Store.findById(identifier);
-  if (!store) {
-    store = await Store.findOne({ slug: identifier });
+  let store;
+
+  // Check if identifier is a valid ObjectId
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    store = await Store.findById(identifier);
   }
 
-  if (!store || !store.isActive) {
+  // If not found by ID or not a valid ObjectId, try slug
+  if (!store) {
+    store = await Store.findOne({ slug: identifier, isActive: true });
+  }
+
+  if (!store) {
     return res.status(404).json({
       success: false,
       message: "Store not found",
@@ -99,7 +106,7 @@ export const getStoresByCategory = asyncHandler(async (req, res) => {
       categories: { $in: [category] },
       isActive: true,
     })
-      .select('-__v')
+      .select("-__v")
       .sort({ rating: -1, totalOrders: -1 })
       .skip(skip)
       .limit(parseInt(limit)),
@@ -134,7 +141,7 @@ export const getFeaturedStores = asyncHandler(async (req, res) => {
     isFeatured: true,
     isActive: true,
   })
-    .select('-__v')
+    .select("-__v")
     .sort({ rating: -1, totalOrders: -1 })
     .limit(parseInt(limit));
 
@@ -160,7 +167,7 @@ export const searchStores = asyncHandler(async (req, res) => {
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
-  const searchRegex = new RegExp(q, 'i');
+  const searchRegex = new RegExp(q, "i");
 
   const query = {
     isActive: true,
@@ -173,7 +180,7 @@ export const searchStores = asyncHandler(async (req, res) => {
 
   const [stores, total] = await Promise.all([
     Store.find(query)
-      .select('-__v')
+      .select("-__v")
       .sort({ rating: -1, totalOrders: -1 })
       .skip(skip)
       .limit(parseInt(limit)),
@@ -220,7 +227,7 @@ export const getNearbyStores = asyncHandler(async (req, res) => {
       },
     },
   })
-    .select('-__v')
+    .select("-__v")
     .limit(20);
 
   res.status(200).json({
