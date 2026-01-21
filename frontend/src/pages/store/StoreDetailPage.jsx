@@ -8,39 +8,38 @@ const StoreDetailPage = () => {
   const { storeName } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState(0);
   const [store, setStore] = useState(location.state?.store || null);
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([{ id: 0, name: "All" }]);
   const [loading, setLoading] = useState(true);
+  const fromSubcategory = location.state?.fromSubcategory;
 
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch store if not in location state
         let storeData = store;
         if (!storeData) {
           const response = await storeAPI.getById(storeName);
-          storeData = response.data;
-          setStore(storeData);
+          if (response.success && response.data) {
+            storeData = response.data;
+            setStore(storeData);
+          }
         }
 
         // Fetch products for this store
         if (storeData) {
-          const productsResponse = await productAPI.getByStore(storeData._id || storeData.id, {
-            limit: 50,
-          });
-          setProducts(productsResponse.data || []);
+          const productsResponse = await productAPI.getByStore(
+            storeData._id || storeData.id,
+            {
+              limit: 50,
+            }
+          );
 
-          // Extract unique categories from products
-          const uniqueCategories = [...new Set(productsResponse.data?.map(p => p.subcategory) || [])];
-          const categoryList = [
-            { id: 0, name: "All" },
-            ...uniqueCategories.map((cat, index) => ({ id: index + 1, name: cat })),
-          ];
-          setCategories(categoryList);
+          if (productsResponse.success && productsResponse.data) {
+            setProducts(productsResponse.data);
+          }
         }
       } catch (error) {
         console.error("Error fetching store data:", error);
@@ -56,12 +55,23 @@ const StoreDetailPage = () => {
     navigate(-1);
   };
 
-  // Filter products based on category selection
-  const filteredProducts = products.filter((product) => {
-    const matchesCategory =
-      selectedCategory === 0 ||
-      product.subcategory === categories[selectedCategory]?.name;
-    return matchesCategory;
+  // Group products by subcategory
+  const groupedProducts = products.reduce((acc, product) => {
+    const subcategory = product.subcategory || "Other";
+    if (!acc[subcategory]) {
+      acc[subcategory] = [];
+    }
+    acc[subcategory].push(product);
+    return acc;
+  }, {});
+
+  // Get subcategories sorted - put the one user came from first
+  const subcategories = Object.keys(groupedProducts).sort((a, b) => {
+    if (fromSubcategory) {
+      if (a === fromSubcategory) return -1;
+      if (b === fromSubcategory) return 1;
+    }
+    return a.localeCompare(b);
   });
 
   if (loading) {
@@ -125,6 +135,7 @@ const StoreDetailPage = () => {
           <div className="w-full h-44 relative">
             <img
               src={
+                store.coverImage ||
                 store.image ||
                 "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=800&q=80"
               }
@@ -152,11 +163,14 @@ const StoreDetailPage = () => {
 
               <div className="flex flex-col items-end gap-1">
                 <div className="flex items-center gap-0.5 bg-[rgb(49,134,22)] px-2 py-0.5 rounded-lg text-white text-[11px] font-bold shadow-lg">
-                  <span>{store.rating}</span>
+                  <span>
+                    {store.stats?.averageRating || store.rating || "4.5"}
+                  </span>
                   <Star className="w-3 h-3 fill-blue-950" />
                 </div>
                 <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-tighter">
-                  {store.reviewCount || "1K+"} ratings
+                  {store.stats?.totalReviews || store.reviewCount || "1K+"}{" "}
+                  ratings
                 </span>
               </div>
             </div>
@@ -179,95 +193,112 @@ const StoreDetailPage = () => {
 
       {/* Products Section */}
       <div className="px-2 pt-4 pb-6">
-        <div className="mb-4">
-          <h2 className="text-[15px] font-black text-white mb-1">
-            All Products
-          </h2>
-          <p className="text-[10px] text-zinc-500 mb-4">
-            {filteredProducts.length} items available
-          </p>
-
-          <div className="grid grid-cols-3 gap-2">
-            {filteredProducts.map((product) => (
-              <div
-                key={product._id || product.id}
-                className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-95"
-                onClick={() =>
-                  navigate(
-                    `/product/${product.slug || product.name
-                      .toLowerCase()
-                      .replace(/\s+/g, "-")}/info`
-                  )
-                }
-              >
-                {/* Product Image */}
-                <div className="w-full aspect-square bg-white/5 rounded-lg overflow-hidden mb-2">
-                  <img
-                    src={product.images?.[0] || product.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80"}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Product Info */}
-                <div className="flex flex-col flex-1">
-                  <h3 className="text-white text-[9px] font-medium line-clamp-2 leading-snug mb-0.5">
-                    {product.name}
-                  </h3>
-
-                  <div className="text-[8px] text-zinc-500 mb-1">
-                    {product.unit || product.weight}
-                  </div>
-
-                  {/* Rating */}
-                  <div className="flex items-center gap-0.5 mb-1.5">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-2 h-2 ${
-                            i < Math.floor(product.averageRating || product.rating || 0)
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-white/20"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-white/40 text-[8px]">
-                      ({product.totalReviews || product.reviewCount || 0})
-                    </span>
-                  </div>
-
-                  {/* Price & Add Button */}
-                  <div className="mt-auto">
-                    <div className="text-white font-bold text-xs mb-1.5">
-                      ₹{product.price}
-                    </div>
-                    <button
-                      className="w-full py-1 border border-[rgb(49,134,22)] text-[rgb(49,134,22)] rounded-md font-semibold text-[9px] active:bg-[rgb(49,134,22)] active:text-white transition-all"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Add to cart logic
-                      }}
-                    >
-                      ADD
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {subcategories.length === 0 ? (
+          <div className="text-center py-12 px-4">
+            <HiOutlineSearch className="text-5xl text-zinc-600 mx-auto mb-3" />
+            <p className="text-zinc-400 text-sm">No products found</p>
+            <p className="text-zinc-600 text-xs mt-1">
+              This store doesn't have any products yet
+            </p>
           </div>
+        ) : (
+          subcategories.map((subcategory) => (
+            <div key={subcategory} className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[15px] font-black text-white">
+                  {subcategory}
+                  {fromSubcategory === subcategory && (
+                    <span className="ml-2 text-[10px] text-[rgb(49,134,22)] font-normal">
+                      • From your search
+                    </span>
+                  )}
+                </h2>
+                <p className="text-[10px] text-zinc-500">
+                  {groupedProducts[subcategory].length} items
+                </p>
+              </div>
 
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12 px-4">
-              <HiOutlineSearch className="text-5xl text-zinc-600 mx-auto mb-3" />
-              <p className="text-zinc-400 text-sm">No products found</p>
-              <p className="text-zinc-600 text-xs mt-1">
-                Try searching with different keywords
-              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {groupedProducts[subcategory].map((product) => (
+                  <div
+                    key={product._id || product.id}
+                    className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-2 relative flex flex-col transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-95"
+                    onClick={() =>
+                      navigate(
+                        `/product/${
+                          product.slug ||
+                          product.name.toLowerCase().replace(/\s+/g, "-")
+                        }/info`
+                      )
+                    }
+                  >
+                    {/* Product Image */}
+                    <div className="w-full aspect-square bg-white/5 rounded-lg overflow-hidden mb-2">
+                      <img
+                        src={
+                          product.images?.[0]?.url ||
+                          product.image ||
+                          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80"
+                        }
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex flex-col flex-1">
+                      <h3 className="text-white text-[9px] font-medium line-clamp-2 leading-snug mb-0.5">
+                        {product.name}
+                      </h3>
+
+                      <div className="text-[8px] text-zinc-500 mb-1">
+                        {product.unit || product.weight}
+                      </div>
+
+                      {/* Rating */}
+                      <div className="flex items-center gap-0.5 mb-1.5">
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-2 h-2 ${
+                                i <
+                                Math.floor(
+                                  product.averageRating || product.rating || 0
+                                )
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-white/20"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-white/40 text-[8px]">
+                          ({product.totalReviews || product.reviewCount || 0})
+                        </span>
+                      </div>
+
+                      {/* Price & Add Button */}
+                      <div className="mt-auto">
+                        <div className="text-white font-bold text-xs mb-1.5">
+                          ₹{product.price}
+                        </div>
+                        <button
+                          className="w-full py-1 border border-[rgb(49,134,22)] text-[rgb(49,134,22)] rounded-md font-semibold text-[9px] active:bg-[rgb(49,134,22)] active:text-white transition-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Add to cart logic
+                          }}
+                        >
+                          ADD
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );
