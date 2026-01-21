@@ -30,7 +30,7 @@ export const categoryAPI = {
     const response = await apiClient.get(
       `/categories/${parentSlug}/subcategories`
     );
-    return response.data.data; // Extract data from backend response
+    return response.data; // Axios interceptor already returns { success, data }, so access .data
   },
 
   /**

@@ -11,7 +11,7 @@ export const productAPI = {
    */
   getAll: async (params = {}) => {
     const response = await apiClient.get("/products", { params });
-    return response.data.data; // Extract data from { success: true, data: [...] }
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -20,7 +20,7 @@ export const productAPI = {
    */
   getById: async (identifier) => {
     const response = await apiClient.get(`/products/${identifier}`);
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -32,7 +32,7 @@ export const productAPI = {
     const response = await apiClient.get(`/products/category/${categorySlug}`, {
       params,
     });
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -44,7 +44,7 @@ export const productAPI = {
     const response = await apiClient.get("/products", {
       params: { ...params, storeId },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -55,7 +55,7 @@ export const productAPI = {
     const response = await apiClient.get("/products/featured", {
       params: { limit },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -64,7 +64,7 @@ export const productAPI = {
    */
   getOnSale: async (params = {}) => {
     const response = await apiClient.get("/products/on-sale", { params });
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -76,7 +76,7 @@ export const productAPI = {
     const response = await apiClient.get("/products/search", {
       params: { ...params, q: query },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 
   /**
@@ -113,6 +113,6 @@ export const productAPI = {
         limit,
       },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // Return full response with { success, data }
   },
 };

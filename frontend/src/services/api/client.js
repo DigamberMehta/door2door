@@ -29,7 +29,7 @@ apiClient.interceptors.request.use(
 // Response interceptor - Handle errors and token refresh
 apiClient.interceptors.response.use(
   (response) => {
-    // Return the data directly
+    // Return response data which contains { success: true, data: [...] }
     return response.data;
   },
   async (error) => {

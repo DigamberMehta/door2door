@@ -11,7 +11,7 @@ export const storeAPI = {
    */
   getAll: async (params = {}) => {
     const response = await apiClient.get("/stores", { params });
-    return response.data.data; // Extract data from { success: true, data: [...] }
+    return response; // { success: true, data: [...] }
   },
 
   /**
@@ -20,7 +20,7 @@ export const storeAPI = {
    */
   getById: async (identifier) => {
     const response = await apiClient.get(`/stores/${identifier}`);
-    return response.data.data; // Extract data from backend response
+    return response; // { success: true, data: {...} }
   },
 
   /**
@@ -32,7 +32,7 @@ export const storeAPI = {
     const response = await apiClient.get(`/stores/category/${category}`, {
       params,
     });
-    return response.data.data; // Extract data from backend response
+    return response; // { success: true, data: [...] }
   },
 
   /**
@@ -43,7 +43,7 @@ export const storeAPI = {
     const response = await apiClient.get("/stores/featured", {
       params: { limit },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // { success: true, data: [...] }
   },
 
   /**
@@ -55,7 +55,7 @@ export const storeAPI = {
     const response = await apiClient.get("/stores/search", {
       params: { ...params, q: query },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // { success: true, data: [...] }
   },
 
   /**
@@ -68,7 +68,7 @@ export const storeAPI = {
     const response = await apiClient.get("/stores/nearby", {
       params: { latitude, longitude, maxDistance },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // { success: true, data: [...] }
   },
 
   /**
@@ -97,6 +97,6 @@ export const storeAPI = {
         limit,
       },
     });
-    return response.data.data; // Extract data from backend response
+    return response; // { success: true, data: [...] }
   },
 };
