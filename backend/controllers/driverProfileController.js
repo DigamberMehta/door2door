@@ -240,13 +240,23 @@ export const uploadDocument = asyncHandler(async (req, res) => {
 
   // Check if document is already verified (prevent re-upload of verified documents)
   // Exception: profilePhoto can be updated unlimited times without verification blocking
+  // Also prevent re-upload if document is pending review
   const currentDoc = profile.documents?.[documentType];
-  if (currentDoc?.isVerified && documentType !== 'profilePhoto') {
-    deleteLocalFile(req.file.path);
-    return res.status(403).json({
-      success: false,
-      message: 'Cannot upload this document. Document is already verified. Contact admin if changes are needed.',
-    });
+  if (documentType !== 'profilePhoto') {
+    if (currentDoc?.isVerified) {
+      deleteLocalFile(req.file.path);
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot upload this document. Document is already verified. Contact admin if changes are needed.',
+      });
+    }
+    if (currentDoc?.status === 'pending') {
+      deleteLocalFile(req.file.path);
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot upload this document. Your previous upload is pending review by admin.',
+      });
+    }
   }
 
   try {

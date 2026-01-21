@@ -179,11 +179,17 @@ const DocumentsPage = () => {
   const handleUpload = async (docId) => {
     const docStatus = documentsStatus[docId];
     
-    // Check if upload is allowed
-    if (docStatus && !docStatus.canReupload) {
-      toast.error("This document is already verified and cannot be changed. Contact admin if you need to update it.", {
-        duration: 4000,
-      });
+    // Only allow upload when status is "not_uploaded" or "rejected"
+    if (docStatus && docStatus.status !== "not_uploaded" && docStatus.status !== "rejected") {
+      if (docStatus.status === "pending") {
+        toast.error("Your document is pending review by admin. Please wait for approval.", {
+          duration: 4000,
+        });
+      } else if (docStatus.status === "verified") {
+        toast.error("This document is already verified. Contact admin if you need to update it.", {
+          duration: 4000,
+        });
+      }
       return;
     }
 
@@ -329,6 +335,9 @@ const DocumentsPage = () => {
             
             const docStatus = documentsStatus[doc.id] || { status: "not_uploaded", canReupload: true };
             const showRejectionReason = docStatus.status === "rejected" && docStatus.rejectionReason;
+            
+            // Only allow upload when status is "not_uploaded" or "rejected" (admin asked to reupload)
+            const canUpload = docStatus.status === "not_uploaded" || docStatus.status === "rejected";
 
             return (
               <div key={doc.id} className="space-y-2">
@@ -356,11 +365,11 @@ const DocumentsPage = () => {
 
                     <button 
                       onClick={() => handleUpload(doc.id)}
-                      disabled={uploading === doc.id || (docStatus.status === "verified" && !docStatus.canReupload)}
+                      disabled={uploading === doc.id || !canUpload}
                       className={`p-2 rounded-xl shrink-0 transition-all active:scale-90 ${
                         uploading === doc.id
                           ? "bg-blue-300/20 border border-blue-300/30"
-                          : docStatus.status === "verified" && !docStatus.canReupload
+                          : !canUpload
                           ? "bg-zinc-800 border border-zinc-700 opacity-50 cursor-not-allowed"
                           : docStatus.status === "rejected"
                           ? "bg-red-500 border border-red-500 shadow-lg shadow-red-500/20"

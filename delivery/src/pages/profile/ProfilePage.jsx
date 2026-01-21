@@ -65,7 +65,11 @@ const ProfilePage = () => {
       
       // Set work schedule - simple array of shift time strings
       if (response.data.profile?.workSchedule && Array.isArray(response.data.profile.workSchedule)) {
-        setSelectedShifts(response.data.profile.workSchedule);
+        // Ensure all items are strings
+        const validShifts = response.data.profile.workSchedule.filter(shift => typeof shift === 'string');
+        setSelectedShifts(validShifts);
+      } else {
+        setSelectedShifts([]);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -169,6 +173,42 @@ const ProfilePage = () => {
       toast.error(error.response?.data?.message || 'Failed to upload profile photo');
     } finally {
       setUploadingPhoto(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API
+      await driverAuthAPI.logout();
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      
+      // Clear local storage
+      localStorage.clear();
+      
+      // Clear session storage
+      sessionStorage.clear();
+      
+      toast.success('Logged out successfully');
+      
+      // Redirect to login
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      // Even if API fails, clear local data and redirect
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate('/login', { replace: true });
     }
   };
 
@@ -692,12 +732,7 @@ const ProfilePage = () => {
                 <p className="text-[10px] text-zinc-500 mt-0.5">Manage and upload your documents</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="bg-amber-500/10 text-amber-500 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-amber-500/20 uppercase">
-                Pending
-              </div>
-              <ChevronRight className="w-4 h-4 text-zinc-600" />
-            </div>
+            <ChevronRight className="w-4 h-4 text-zinc-600" />
           </button>
         </div>
 
@@ -840,7 +875,9 @@ const ProfilePage = () => {
                   {selectedShifts.length > 0 ? (
                     selectedShifts.slice(0, 3).map((shift, idx) => (
                       <div key={idx} className="bg-blue-300/10 border border-blue-300/20 px-2.5 py-1 rounded-lg">
-                        <span className="text-blue-200 font-bold text-[10px]">{shift.replace(":00 ", " ")}</span>
+                        <span className="text-blue-200 font-bold text-[10px]">
+                          {typeof shift === 'string' ? shift.replace(":00 ", " ") : shift}
+                        </span>
                       </div>
                     ))
                   ) : (
@@ -885,7 +922,7 @@ const ProfilePage = () => {
         {/* Sign Out */}
         <div className="pb-6">
           <button 
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
             className="w-full bg-red-500/5 border border-red-500/10 rounded-2xl p-3.5 flex items-center justify-between active:bg-red-500/10 transition-all"
           >
             <div className="flex items-center gap-3">
