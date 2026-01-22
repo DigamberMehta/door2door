@@ -49,6 +49,18 @@ export const productAPI = {
   },
 
   /**
+   * Get products by store with search context
+   * @param {string} storeId - Store ID
+   * @param {Object} params - Query parameters (query, category, limit)
+   */
+  getByStoreWithContext: async (storeId, params = {}) => {
+    const response = await apiClient.get(`/products/store/${storeId}/context`, {
+      params,
+    });
+    return response; // Return full response with { success, data }
+  },
+
+  /**
    * Get featured products
    * @param {number} limit - Number of products to fetch
    */
