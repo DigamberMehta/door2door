@@ -10,6 +10,7 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import couponRoutes from "./routes/couponRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 
 // Load environment variables
@@ -78,6 +79,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/coupons", couponRoutes);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);
