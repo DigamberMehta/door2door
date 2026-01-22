@@ -167,7 +167,15 @@ const SearchPage = () => {
                     stores={results} 
                     onStoreClick={(store) => {
                       const storeNameSlug = store.name.toLowerCase().replace(/\s+/g, "-");
-                      navigate(`/store/${storeNameSlug}`, { state: { store } });
+                      navigate(`/store/${storeNameSlug}`, { 
+                        state: { 
+                          store,
+                          searchContext: {
+                            query: searchQuery,
+                            category: store.category
+                          }
+                        } 
+                      });
                     }} 
                   />
                 </div>
