@@ -50,9 +50,12 @@ class SuggestionsService {
       const hasFuzzyMatches = suggestions.some(s => s.isFuzzyMatch);
       const hasLowResults = suggestions.length < 3;
       
+      console.log(`🔍 Query: "${query}" | Results: ${suggestions.length} | FuzzyMatches: ${hasFuzzyMatches} | LowResults: ${hasLowResults}`);
+      
       let corrections = [];
       if (includeCorrections && (hasFuzzyMatches || hasLowResults)) {
         corrections = await this.getSpellingCorrections(query, 3);
+        console.log(`💡 Generated ${corrections.length} spelling corrections:`, corrections.map(c => c.suggestion));
       }
 
       // Group suggestions by type
@@ -61,6 +64,9 @@ class SuggestionsService {
       // Add corrections if any
       if (corrections.length > 0) {
         grouped.corrections = corrections;
+        console.log(`✅ Added corrections to response:`, grouped.corrections);
+      } else {
+        console.log(`❌ No corrections to add`);
       }
 
       // Cache the results
@@ -557,6 +563,8 @@ class SuggestionsService {
    */
   static async getSpellingCorrections(query, limit = 3) {
     try {
+      console.log(`🔤 Getting spelling corrections for: "${query}"`);
+      
       // Fetch a sample of common product and category names
       const [products, categories] = await Promise.all([
         Product.find({ isActive: true })
@@ -568,6 +576,8 @@ class SuggestionsService {
           .select('name')
           .lean()
       ]);
+
+      console.log(`📚 Dictionary size: ${products.length} products, ${categories.length} categories`);
 
       // Build a dictionary of common terms
       const dictionary = new Set();
@@ -585,12 +595,16 @@ class SuggestionsService {
 
       // Convert to array for fuzzy matching
       const terms = Array.from(dictionary);
+      
+      console.log(`🎯 Total dictionary terms: ${terms.length}`);
 
       // Find closest matches using fuzzy search
       const matches = fuzzysort.go(query, terms, {
         threshold: -3000,
         limit: limit
       });
+
+      console.log(`🎲 Fuzzy matches found: ${matches.length}`, matches.map(m => `${m.target} (${m.score})`));
 
       return matches.map(match => ({
         suggestion: match.target,

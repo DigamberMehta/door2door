@@ -162,6 +162,8 @@ export const getFeaturedStores = asyncHandler(async (req, res) => {
 export const searchStores = asyncHandler(async (req, res) => {
   const { q, page = 1, limit = 20 } = req.query;
 
+  console.log(`🔍 Store Search Request: "${q}"`);
+
   if (!q || q.trim().length < 2) {
     return res.status(400).json({
       success: false,

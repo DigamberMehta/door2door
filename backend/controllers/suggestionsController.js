@@ -16,8 +16,8 @@ export const getSuggestions = async (req, res) => {
       });
     }
 
-    // Get suggestions
-    const suggestions = await SuggestionsService.getSuggestions(q.trim(), {
+    // Get suggestions (returns { stores: [], products: [], categories: [], corrections: [] })
+    const result = await SuggestionsService.getSuggestions(q.trim(), {
       type: type || null,
       limit: parseInt(limit),
       useCache: true
@@ -29,10 +29,16 @@ export const getSuggestions = async (req, res) => {
       console.error('Failed to track search:', err);
     });
 
+    // Return both suggestions and corrections
     res.json({
       success: true,
       query: q,
-      suggestions
+      suggestions: {
+        stores: result.stores || [],
+        products: result.products || [],
+        categories: result.categories || [],
+        corrections: result.corrections || []
+      }
     });
   } catch (error) {
     console.error('Get suggestions error:', error);

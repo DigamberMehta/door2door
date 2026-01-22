@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { HiOutlineSearch, HiOutlineArrowLeft, HiOutlineMicrophone } from "react-icons/hi";
 import { motion, AnimatePresence } from "framer-motion";
-import { StoreList, storesData } from "../homepage/store";
-import { storeAPI } from "../../services/api";
-import SuggestionsDropdown from "../../components/SuggestionsDropdown";
+import { StoreList } from "../homepage/store";
+import { storeAPI, suggestionsAPI } from "../../services/api";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -15,6 +14,7 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [spellingCorrections, setSpellingCorrections] = useState([]);
 
   useEffect(() => {
     // Focus the search box on mount if no initial query
@@ -29,29 +29,41 @@ const SearchPage = () => {
     if (q) setSearchQuery(q);
   }, [searchParams]);
 
-  // Use atmospheric stores data by default, but fetch real data when searching
+  // Fetch suggestions and store results
   useEffect(() => {
     const fetchResults = async () => {
       const query = searchQuery.trim();
-      if (!query) {
+      if (!query || query.length < 2) {
         setResults([]);
+        setSpellingCorrections([]);
         return;
       }
 
       try {
         setLoading(true);
-        // If it's a category search, we might want a different API call or just filter
-        const category = searchParams.get("category");
-        let response;
         
-        if (category) {
-          response = await storeAPI.getByCategory(category);
+        // Get suggestions (includes corrections)
+        const suggestionsResponse = await suggestionsAPI.getSuggestions(query, { limit: 10, type: 'store' });
+        
+        // Extract corrections if available
+        if (suggestionsResponse.suggestions?.corrections) {
+          setSpellingCorrections(suggestionsResponse.suggestions.corrections);
         } else {
-          response = await storeAPI.search(query);
+          setSpellingCorrections([]);
         }
 
-        if (response.success) {
-          setResults(response.data);
+        // Get store results
+        const category = searchParams.get("category");
+        let storeResponse;
+        
+        if (category) {
+          storeResponse = await storeAPI.getByCategory(category);
+        } else {
+          storeResponse = await storeAPI.search(query);
+        }
+
+        if (storeResponse.success) {
+          setResults(storeResponse.data);
         }
       } catch (error) {
         console.error("Search error:", error);
@@ -66,10 +78,10 @@ const SearchPage = () => {
 
   return (
     <motion.div 
-      initial={{ y: "-100%", opacity: 0 }}
+      initial={{ y: "100%", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={{ y: "-100%", opacity: 0 }}
-      transition={{ type: "spring", damping: 25, stiffness: 200 }}
+      exit={{ y: "100%", opacity: 0 }}
+      transition={{ type: "spring", damping: 30, stiffness: 300 }}
       className="min-h-screen bg-black text-white"
     >
       {/* Search Header */}
@@ -110,35 +122,42 @@ const SearchPage = () => {
       {/* Main Content Area */}
       <div className="px-4 py-2">
         <AnimatePresence mode="wait">
-          {!searchQuery ? (
-            <motion.div
-              key="suggestions-empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <SuggestionsDropdown
-                isOpen={true}
-                onClose={() => {}}
-                searchQuery=""
-                onSearch={(query) => setSearchQuery(query)}
-              />
-            </motion.div>
-          ) : (
+          {searchQuery.length >= 2 ? (
             <motion.div
               key="search-results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="space-y-4"
             >
-              {/* Real-time Results */}
+              {/* Spelling Corrections */}
+              {spellingCorrections.length > 0 && (
+                <div className="px-2 py-3 bg-white/5 rounded-xl border border-white/10">
+                  <div className="text-[11px] text-zinc-500 mb-2">
+                    Did you mean?
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {spellingCorrections.map((correction, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSearchQuery(correction.suggestion)}
+                        className="px-3 py-1.5 text-sm bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-full transition-colors"
+                      >
+                        {correction.suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Store Results */}
               {loading ? (
                 <div className="flex justify-center py-10">
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : results.length > 0 ? (
-                <div className="pt-4 border-t border-white/5">
+                <div className="pt-2">
                   <div className="px-1 py-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">
                     Stores
                   </div>
@@ -150,11 +169,31 @@ const SearchPage = () => {
                     }} 
                   />
                 </div>
-              ) : searchQuery.length >= 3 && (
-                <div className="text-center py-10 opacity-50 text-sm">
+              ) : (
+                <div className="text-center py-20 opacity-50 text-sm">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <HiOutlineSearch className="w-8 h-8 text-white/20" />
+                  </div>
                   No stores found matching "{searchQuery}"
                 </div>
               )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty-state"
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="flex flex-col items-center justify-center py-24 text-center"
+            >
+              <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/5">
+                <HiOutlineSearch className="w-12 h-12 text-white/10" />
+              </div>
+              <h3 className="text-xl font-semibold text-white/80 mb-2">Search door2door</h3>
+              <p className="text-sm text-white/30 max-w-[240px] leading-relaxed mx-auto">
+                Discover local stores, fresh groceries, and the best deals near you
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
