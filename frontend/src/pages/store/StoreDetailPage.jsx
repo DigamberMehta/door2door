@@ -24,6 +24,7 @@ const StoreDetailPage = () => {
   const [conflictData, setConflictData] = useState(null);
   const [pendingCartItem, setPendingCartItem] = useState(null);
   const fromSubcategory = location.state?.fromSubcategory;
+  const searchContext = location.state?.searchContext; // { query, category }
 
   // Fetch cart items
   const fetchCartItems = async () => {
@@ -71,15 +72,40 @@ const StoreDetailPage = () => {
 
         // Fetch products for this store
         if (storeData) {
-          const productsResponse = await productAPI.getByStore(
-            storeData._id || storeData.id,
-            {
-              limit: 50,
-            },
-          );
-
-          if (productsResponse.success && productsResponse.data) {
-            setProducts(productsResponse.data);
+          let productsResponse;
+          
+          // Use context-aware endpoint if we have search context
+          if (searchContext?.query || searchContext?.category) {
+            productsResponse = await productAPI.getByStoreWithContext(
+              storeData._id || storeData.id,
+              {
+                query: searchContext.query || "",
+                category: searchContext.category || "",
+                limit: 50,
+              }
+            );
+            
+            // Flatten the prioritized product groups
+            if (productsResponse.success && productsResponse.data) {
+              const { matchingProducts, categoryProducts, otherProducts } = productsResponse.data;
+              setProducts([
+                ...matchingProducts,
+                ...categoryProducts,
+                ...otherProducts
+              ]);
+            }
+          } else {
+            // Normal product fetching without search context
+            productsResponse = await productAPI.getByStore(
+              storeData._id || storeData.id,
+              {
+                limit: 50,
+              }
+            );
+            
+            if (productsResponse.success && productsResponse.data) {
+              setProducts(productsResponse.data);
+            }
           }
         }
       } catch (error) {
@@ -270,18 +296,55 @@ const StoreDetailPage = () => {
     }
   };
 
-  // Group products by subcategory
-  const groupedProducts = products.reduce((acc, product) => {
-    const subcategory = product.subcategory || "Other";
-    if (!acc[subcategory]) {
-      acc[subcategory] = [];
+  // Group products by subcategory or search context
+  const groupedProducts = products.reduce((acc, product, index) => {
+    // When search context exists, group by priority
+    if (searchContext?.query) {
+      // First products are matching, then category, then others
+      // We need to determine which section this product belongs to
+      let section = "Other Products";
+      
+      // Check if product name/description contains search query
+      const query = searchContext.query.toLowerCase();
+      const matchesQuery = 
+        product.name?.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query) ||
+        product.tags?.some(tag => tag.toLowerCase().includes(query));
+      
+      if (matchesQuery) {
+        section = `Matching "${searchContext.query}"`;
+      } else if (searchContext.category && 
+                (product.category === searchContext.category || 
+                 product.subcategory === searchContext.category)) {
+        section = `Similar Products`;
+      }
+      
+      if (!acc[section]) {
+        acc[section] = [];
+      }
+      acc[section].push(product);
+    } else {
+      // Normal grouping by subcategory
+      const subcategory = product.subcategory || "Other";
+      if (!acc[subcategory]) {
+        acc[subcategory] = [];
+      }
+      acc[subcategory].push(product);
     }
-    acc[subcategory].push(product);
     return acc;
   }, {});
 
-  // Get subcategories sorted - put the one user came from first
+  // Get subcategories sorted - put search matches first, then the one user came from
   const subcategories = Object.keys(groupedProducts).sort((a, b) => {
+    // When search context exists, prioritize match sections
+    if (searchContext?.query) {
+      if (a.startsWith('Matching')) return -1;
+      if (b.startsWith('Matching')) return 1;
+      if (a === 'Similar Products') return -1;
+      if (b === 'Similar Products') return 1;
+    }
+    
+    // Normal subcategory sorting
     if (fromSubcategory) {
       if (a === fromSubcategory) return -1;
       if (b === fromSubcategory) return 1;
@@ -363,34 +426,14 @@ const StoreDetailPage = () => {
       {/* Store Banner */}
       <StoreBanner store={store} />
 
-      {/* Subcategory Navigation */}
-      {subcategories.length > 0 && (
-        <div className="sticky top-[60px] z-40 bg-black/80 backdrop-blur-xl border-b border-white/5 py-3">
-          <div className="flex gap-2 overflow-x-auto px-2 scrollbar-none">
-            {subcategories.map((subcategory) => (
-              <button
-                key={subcategory}
-                onClick={() => {
-                  const element = document.getElementById(`section-${subcategory}`);
-                  if (element) {
-                    const headerOffset = 120;
-                    const elementPosition = element.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({
-                      top: offsetPosition,
-                      behavior: "smooth"
-                    });
-                  }
-                }}
-                className={`px-4 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border ${
-                  fromSubcategory === subcategory
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10"
-                }`}
-              >
-                {subcategory}
-              </button>
-            ))}
+      {/* Search Context Indicator */}
+      {searchContext?.query && (
+        <div className="mx-4 mt-4 mb-2 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+            <span className="text-[11px] text-blue-300/80 font-medium">
+              Results for '{searchContext.query}'
+            </span>
           </div>
         </div>
       )}
