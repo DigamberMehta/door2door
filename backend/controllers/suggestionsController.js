@@ -8,6 +8,8 @@ export const getSuggestions = async (req, res) => {
   try {
     const { q, type, limit = 10, userLat, userLon } = req.query;
 
+    console.log('🔍 getSuggestions - Query:', q, 'UserLat:', userLat, 'UserLon:', userLon);
+
     // Validate query
     if (!q || q.trim().length < 2) {
       return res.status(400).json({

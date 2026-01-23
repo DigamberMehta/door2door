@@ -98,16 +98,19 @@ const SearchPage = () => {
         // Extract stores from suggestions response
         if (suggestionsResponse.suggestions?.stores) {
           // Convert suggestion format to store format for display
-          const stores = suggestionsResponse.suggestions.stores.map(suggestion => ({
-            _id: suggestion.id?.replace('store_', ''),
-            name: suggestion.name,
-            description: suggestion.description,
-            image: suggestion.image,
-            rating: suggestion.rating,
-            category: suggestion.category,
-            distance: suggestion.distance, // Now includes calculated distance
-            address: suggestion.address
-          }));
+          const stores = suggestionsResponse.suggestions.stores.map(suggestion => {
+            console.log('Store:', suggestion.name, 'Distance:', suggestion.distance, 'User Location:', userLocation);
+            return {
+              _id: suggestion.id?.replace('store_', ''),
+              name: suggestion.name,
+              description: suggestion.description,
+              image: suggestion.image,
+              rating: suggestion.rating,
+              category: suggestion.category,
+              distance: suggestion.distance, // Now includes calculated distance
+              address: suggestion.address
+            };
+          });
           setResults(stores);
         } else {
           setResults([]);
