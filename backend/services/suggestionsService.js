@@ -2,6 +2,7 @@ import { cacheHelpers } from '../config/redis.js';
 import Product from '../models/Product.js';
 import Store from '../models/Store.js';
 import Category from '../models/Category.js';
+import DeliverySettings from '../models/DeliverySettings.js';
 import fuzzysort from 'fuzzysort';
 import { expandQueryWithSynonyms, getSynonyms } from '../config/synonyms.js';
 
@@ -34,7 +35,9 @@ class SuggestionsService {
         type = null,
         limit = 10,
         useCache = true,
-        includeCorrections = true
+        includeCorrections = true,
+        userLat = null,
+        userLon = null
       } = options;
 
       // Generate cache key
@@ -49,7 +52,7 @@ class SuggestionsService {
       }
 
       // Use MongoDB Atlas Search
-      const suggestions = await this.atlasSearch(query, { type, limit });
+      const suggestions = await this.atlasSearch(query, { type, limit, userLat, userLon });
 
       // Check if results look like they might be from a typo (fuzzy matches or few results)
       const hasFuzzyMatches = suggestions.some(s => s.isFuzzyMatch);
@@ -93,12 +96,12 @@ class SuggestionsService {
    * @returns {Promise<Array>} Search results
    */
   static async atlasSearch(query, options = {}) {
-    const { type, limit = 10 } = options;
+    const { type, limit = 10, userLat = null, userLon = null } = options;
     let results = [];
 
     try {
       // First attempt: Autocomplete-style search with synonyms
-      const autocompleteResults = await this.autocompleteSearch(query, { type, limit });
+      const autocompleteResults = await this.autocompleteSearch(query, { type, limit, userLat, userLon });
       
       // If autocomplete returns too few results (< 3), fall back to aggressive fuzzy search
       const AUTOCOMPLETE_THRESHOLD = 3;
@@ -107,7 +110,7 @@ class SuggestionsService {
         console.log(`⚠️ Autocomplete returned ${autocompleteResults.length} results for "${query}". Triggering fuzzy fallback...`);
         
         // Run aggressive fuzzy search
-        const fuzzyResults = await this.aggressiveFuzzySearch(query, { type, limit });
+        const fuzzyResults = await this.aggressiveFuzzySearch(query, { type, limit, userLat, userLon });
         
         // Merge results (prioritize autocomplete, then fuzzy)
         const mergedResults = this.mergeAndDeduplicateResults(
@@ -133,7 +136,7 @@ class SuggestionsService {
    * @returns {Promise<Array>} Search results
    */
   static async autocompleteSearch(query, options = {}) {
-    const { type, limit = 10 } = options;
+    const { type, limit = 10, userLat = null, userLon = null } = options;
     const results = [];
 
     try {
@@ -295,24 +298,56 @@ class SuggestionsService {
               image: 1,
               rating: 1,
               category: 1,
-              searchScore: 1
+              searchScore: 1,
+              address: 1
             }
           }
         ]);
 
-        // Atlas Search already sorted by relevance, just limit and map
-        const sortedStores = stores.slice(0, limit);
+        // Get max delivery distance from settings (default 7km)
+        const deliverySettings = await DeliverySettings.findOne();
+        const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
 
-        results.push(...sortedStores.map(s => ({
-          type: 'store',
-          name: s.name,
-          description: s.description,
-          image: s.image || '',
-          rating: s.rating,
-          category: s.category,
-          id: `store_${s._id}`,
-          score: s.searchScore
-        })));
+        // Calculate distances if user location provided
+        const storesWithDistance = stores.map(s => {
+          const storeData = {
+            type: 'store',
+            name: s.name,
+            description: s.description,
+            image: s.image || '',
+            rating: s.rating,
+            category: s.category,
+            id: `store_${s._id}`,
+            score: s.searchScore,
+            address: s.address
+          };
+
+          // Calculate distance if coordinates available
+          if (userLat && userLon && s.address?.latitude && s.address?.longitude) {
+            const R = 6371; // Earth radius in km
+            const dLat = (s.address.latitude - userLat) * Math.PI / 180;
+            const dLon = (s.address.longitude - userLon) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(userLat * Math.PI / 180) * Math.cos(s.address.latitude * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            storeData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
+          }
+
+          return storeData;
+        });
+
+        // Filter stores by max delivery distance if user location provided
+        const filteredStores = userLat && userLon
+          ? storesWithDistance.filter(s => !s.distance || s.distance <= maxDistance)
+          : storesWithDistance;
+
+        // Sort by distance if available, otherwise keep search score order
+        const sortedStores = userLat && userLon 
+          ? filteredStores.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity)).slice(0, limit)
+          : filteredStores.slice(0, limit);
+
+        results.push(...sortedStores);
       }
 
       // Search categories using Atlas Search
@@ -391,7 +426,7 @@ class SuggestionsService {
    * @returns {Promise<Array>} Search results
    */
   static async aggressiveFuzzySearch(query, options = {}) {
-    const { type, limit = 10 } = options;
+    const { type, limit = 10, userLat = null, userLon = null } = options;
     const results = [];
 
     try {
@@ -505,13 +540,13 @@ class SuggestionsService {
           ]
         })
           .limit(fetchLimit)
-          .select('name description image rating category')
+          .select('name description image rating category address')
           .lean();
 
         // Also fuzzy match on store names directly
         const allStores = await Store.find({ isActive: true })
           .limit(fetchLimit)
-          .select('name description image rating category')
+          .select('name description image rating category address')
           .lean();
 
         const storeNameMatches = fuzzysort.go(query, allStores, {
@@ -553,16 +588,46 @@ class SuggestionsService {
           .slice(0, limit)
           .map(item => item.store);
 
-        results.push(...sortedStores.map(s => ({
-          type: 'store',
-          name: s.name,
-          description: s.description,
-          image: s.image || '',
-          rating: s.rating,
-          category: s.category,
-          id: `store_${s._id}`,
-          isFuzzyMatch: true
-        })));
+        // Get max delivery distance from settings (default 7km)
+        const deliverySettings = await DeliverySettings.findOne();
+        const maxDistance = deliverySettings?.maxDeliveryDistance || 7;
+
+        // Calculate distances and filter by max distance
+        const storesWithDistance = sortedStores.map(s => {
+          const storeData = {
+            type: 'store',
+            name: s.name,
+            description: s.description,
+            image: s.image || '',
+            rating: s.rating,
+            category: s.category,
+            id: `store_${s._id}`,
+            isFuzzyMatch: true,
+            matchType: 'fuzzy',
+            address: s.address
+          };
+
+          // Calculate distance if coordinates available
+          if (userLat && userLon && s.address?.latitude && s.address?.longitude) {
+            const R = 6371; // Earth radius in km
+            const dLat = (s.address.latitude - userLat) * Math.PI / 180;
+            const dLon = (s.address.longitude - userLon) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(userLat * Math.PI / 180) * Math.cos(s.address.latitude * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            storeData.distance = Math.round(c * R * 10) / 10; // Round to 1 decimal
+          }
+
+          return storeData;
+        });
+
+        // Filter by max delivery distance if user location provided
+        const filteredStores = userLat && userLon
+          ? storesWithDistance.filter(s => !s.distance || s.distance <= maxDistance)
+          : storesWithDistance;
+
+        results.push(...filteredStores);
       }
 
       // Search categories

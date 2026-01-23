@@ -44,7 +44,7 @@ const StoreCard = ({ store, onStoreClick }) => {
 
         <p className="text-zinc-500 text-[11px] truncate font-medium">
           {store.address?.city || store.location || "Near Market"} •{" "}
-          {store.distance || "2.5 km"}
+          {store.distance ? `${store.distance} km` : "2.5 km"}
         </p>
       </div>
     </div>

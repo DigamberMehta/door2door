@@ -15,6 +15,44 @@ const SearchPage = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [spellingCorrections, setSpellingCorrections] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+
+  // Get user location on mount
+  useEffect(() => {
+    // Fetch user's saved address from backend
+    const fetchUserLocation = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch('http://localhost:3000/api/customer-profile/addresses', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.addresses && data.addresses.length > 0) {
+              // Use the default address or first address
+              const defaultAddress = data.addresses.find(addr => addr.isDefault) || data.addresses[0];
+              if (defaultAddress.latitude && defaultAddress.longitude) {
+                setUserLocation({
+                  lat: defaultAddress.latitude,
+                  lon: defaultAddress.longitude
+                });
+                console.log('Using user address location:', defaultAddress.city);
+                return;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user address:', error);
+      }
+    };
+    
+    fetchUserLocation();
+  }, []);
 
   useEffect(() => {
     // Focus the search box on mount if no initial query
@@ -42,8 +80,13 @@ const SearchPage = () => {
       try {
         setLoading(true);
         
-        // Single API call - get suggestions which includes store data
-        const suggestionsResponse = await suggestionsAPI.getSuggestions(query, { limit: 10, type: 'store' });
+        // Single API call - get suggestions which includes store data with distances
+        const suggestionsResponse = await suggestionsAPI.getSuggestions(query, { 
+          limit: 10, 
+          type: 'store',
+          userLat: userLocation?.lat,
+          userLon: userLocation?.lon
+        });
         
         // Extract corrections if available
         if (suggestionsResponse.suggestions?.corrections) {
@@ -61,7 +104,9 @@ const SearchPage = () => {
             description: suggestion.description,
             image: suggestion.image,
             rating: suggestion.rating,
-            category: suggestion.category
+            category: suggestion.category,
+            distance: suggestion.distance, // Now includes calculated distance
+            address: suggestion.address
           }));
           setResults(stores);
         } else {
@@ -76,7 +121,7 @@ const SearchPage = () => {
 
     const timer = setTimeout(fetchResults, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, searchParams]);
+  }, [searchQuery, searchParams, userLocation]);
 
   return (
     <motion.div 
