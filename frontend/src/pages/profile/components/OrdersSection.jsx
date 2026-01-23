@@ -1,6 +1,9 @@
 import { ShoppingBag, Star, Gift, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const OrdersSection = () => {
+  const navigate = useNavigate();
+
   return (
     <div>
       <h3 className="text-white/40 text-[10px] uppercase tracking-wider font-semibold px-2 mb-2">
@@ -8,7 +11,7 @@ const OrdersSection = () => {
       </h3>
       <div className="space-y-2">
         <button
-          onClick={() => {}}
+          onClick={() => navigate("/profile/orders")}
           className="w-full bg-white/5 backdrop-blur-xl rounded-xl border border-white/5 p-3 active:bg-white/10 transition-all text-left"
         >
           <div className="flex items-center justify-between">
