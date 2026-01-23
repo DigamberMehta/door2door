@@ -66,7 +66,7 @@ app.get("/api/health", (req, res) => {
 app.get("/api/", (req, res) => {
   res.json({
     success: true,
-    message: "Welcome to Door2Door API",
+    message: "Welcome to Store2Door API",
     version: "1.0.0",
     endpoints: {
       users: "/api/users",
@@ -116,7 +116,7 @@ const connectDB = async () => {
 const startServer = async () => {
   try {
     await connectDB();
-    
+
     // Initialize Redis (optional)
     await connectRedis();
 
