@@ -47,12 +47,13 @@ const SearchPage = () => {
   };
 
   useEffect(() => {
-<<<<<<< HEAD
+    fetchCartItems();
+
     // Fetch user's saved address from backend
     const fetchUserLocation = async () => {
       console.log('🔄 Attempting to fetch user location...');
       try {
-        const token = localStorage.getItem('authToken'); // Changed from 'token' to 'authToken'
+        const token = localStorage.getItem('authToken');
         console.log('🔑 Token found:', !!token, token ? `(${token.substring(0, 20)}...)` : 'null');
         if (!token) {
           setLocationError('Please login to see accurate distances');
