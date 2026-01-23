@@ -45,8 +45,13 @@ const StoreCard = ({ store, onStoreClick }) => {
         </p>
 
         <p className="text-zinc-500 text-[11px] truncate font-medium">
-          {store.address?.city || store.location || "Near Market"} •{" "}
-          {store.distance ? `${store.distance} km` : "2.5 km"}
+          {store.address?.city || store.location || "Near Market"}
+          {store.distance && (
+            <>
+              {" • "}
+              <span className="text-blue-400 font-semibold">{store.distance} km</span>
+            </>
+          )}
         </p>
       </div>
     </div>

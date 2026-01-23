@@ -16,38 +16,55 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [spellingCorrections, setSpellingCorrections] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
+  const [locationError, setLocationError] = useState(null);
 
   // Get user location on mount
   useEffect(() => {
     // Fetch user's saved address from backend
     const fetchUserLocation = async () => {
+      console.log('🔄 Attempting to fetch user location...');
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await fetch('http://localhost:3000/api/customer-profile/addresses', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.addresses && data.addresses.length > 0) {
-              // Use the default address or first address
-              const defaultAddress = data.addresses.find(addr => addr.isDefault) || data.addresses[0];
-              if (defaultAddress.latitude && defaultAddress.longitude) {
-                setUserLocation({
-                  lat: defaultAddress.latitude,
-                  lon: defaultAddress.longitude
-                });
-                console.log('Using user address location:', defaultAddress.city);
-                return;
-              }
-            }
+        const token = localStorage.getItem('authToken'); // Changed from 'token' to 'authToken'
+        console.log('🔑 Token found:', !!token, token ? `(${token.substring(0, 20)}...)` : 'null');
+        if (!token) {
+          setLocationError('Please login to see accurate distances');
+          console.warn('No auth token found - user not logged in');
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/api/customer-profile/addresses', {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📍 Address API response:', data);
+          const addresses = data.data?.addresses || data.addresses || [];
+          if (data.success && addresses.length > 0) {
+            // Use the default address or first address
+            const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
+            if (defaultAddress.latitude && defaultAddress.longitude) {
+              setUserLocation({
+                lat: defaultAddress.latitude,
+                lon: defaultAddress.longitude
+              });
+              console.log('✅ User location set:', defaultAddress.city, `(${defaultAddress.latitude}, ${defaultAddress.longitude})`);
+              setLocationError(null);
+              return;
+            } else {
+              setLocationError('Address found but missing coordinates');
+            }
+          } else {
+            setLocationError('No delivery address found. Please add an address.');
+          }
+        } else {
+          setLocationError('Failed to fetch address');
         }
       } catch (error) {
         console.error('Error fetching user address:', error);
+        setLocationError('Failed to fetch location');
       }
     };
     
@@ -81,12 +98,14 @@ const SearchPage = () => {
         setLoading(true);
         
         // Single API call - get suggestions which includes store data with distances
+        console.log('🔍 Fetching suggestions with user location:', userLocation);
         const suggestionsResponse = await suggestionsAPI.getSuggestions(query, { 
           limit: 10, 
           type: 'store',
           userLat: userLocation?.lat,
           userLon: userLocation?.lon
         });
+        console.log('📦 API Response:', suggestionsResponse);
         
         // Extract corrections if available
         if (suggestionsResponse.suggestions?.corrections) {
@@ -99,7 +118,7 @@ const SearchPage = () => {
         if (suggestionsResponse.suggestions?.stores) {
           // Convert suggestion format to store format for display
           const stores = suggestionsResponse.suggestions.stores.map(suggestion => {
-            console.log('Store:', suggestion.name, 'Distance:', suggestion.distance, 'User Location:', userLocation);
+            console.log('📍 Store:', suggestion.name, '| Distance:', suggestion.distance, 'km | Has coords:', !!suggestion.address?.latitude);
             return {
               _id: suggestion.id?.replace('store_', ''),
               name: suggestion.name,
@@ -107,10 +126,11 @@ const SearchPage = () => {
               image: suggestion.image,
               rating: suggestion.rating,
               category: suggestion.category,
-              distance: suggestion.distance, // Now includes calculated distance
+              distance: suggestion.distance, // Distance from backend
               address: suggestion.address
             };
           });
+          console.log(`✅ Processed ${stores.length} stores with distances:`, stores.map(s => `${s.name}: ${s.distance}km`));
           setResults(stores);
         } else {
           setResults([]);
