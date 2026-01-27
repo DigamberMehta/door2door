@@ -7,18 +7,33 @@ import {
   MdCheckroom,
   MdRestaurant,
   MdHome,
+  MdCategory,
 } from "react-icons/md";
 
-const CategoryFilter = ({ selectedCategory, setSelectedCategory }) => {
-  const categories = [
+const CategoryFilter = ({
+  selectedCategory,
+  setSelectedCategory,
+  categories = [],
+}) => {
+  // Icon mapping for categories
+  const iconMap = {
+    grocery: MdShoppingCart,
+    pharmacy: MdLocalPharmacy,
+    electronics: MdPhoneIphone,
+    beauty: MdFace,
+    fashion: MdCheckroom,
+    food: MdRestaurant,
+    home: MdHome,
+  };
+
+  // Build categories array with "All" at the start
+  const displayCategories = [
     { id: "all", name: "All", icon: MdStorefront },
-    { id: "grocery", name: "Grocery", icon: MdShoppingCart },
-    { id: "pharmacy", name: "Pharmacy", icon: MdLocalPharmacy },
-    { id: "electronics", name: "Electronics", icon: MdPhoneIphone },
-    { id: "beauty", name: "Beauty", icon: MdFace },
-    { id: "fashion", name: "Fashion", icon: MdCheckroom },
-    { id: "food", name: "Food", icon: MdRestaurant },
-    { id: "home", name: "Home", icon: MdHome },
+    ...categories.map((cat) => ({
+      id: cat.slug || cat.name.toLowerCase(),
+      name: cat.name,
+      icon: iconMap[cat.slug] || iconMap[cat.name.toLowerCase()] || MdCategory,
+    })),
   ];
 
   return (
@@ -27,7 +42,7 @@ const CategoryFilter = ({ selectedCategory, setSelectedCategory }) => {
       <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
 
       <div className="flex gap-2 md:gap-3 px-3 md:px-4 min-w-min relative z-10">
-        {categories.map((category) => {
+        {displayCategories.map((category) => {
           const IconComponent = category.icon;
           return (
             <button

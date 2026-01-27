@@ -11,10 +11,7 @@ import {
 import { CategoryFilter } from "../pages/homepage/category";
 import { customerProfileAPI } from "../services/api";
 
-const Header = ({
-  selectedCategory,
-  setSelectedCategory,
-}) => {
+const Header = ({ selectedCategory, setSelectedCategory, categories = [] }) => {
   const navigate = useNavigate();
   const [addressData, setAddressData] = useState({
     label: null,
@@ -88,7 +85,7 @@ const Header = ({
 
       {/* Search Bar */}
       <div className="relative px-4 py-2 pb-3">
-        <div 
+        <div
           onClick={() => navigate("/search")}
           className="flex items-center bg-black/30 backdrop-blur-sm border border-white/20 rounded-2xl px-5 py-3.5 gap-3 shadow-lg transition-all duration-300 focus-within:bg-black/40 focus-within:border-white/40 focus-within:shadow-xl hover:bg-black/35 cursor-pointer"
         >
@@ -105,6 +102,7 @@ const Header = ({
       <CategoryFilter
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        categories={categories}
       />
     </header>
   );

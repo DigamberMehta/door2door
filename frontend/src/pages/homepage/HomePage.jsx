@@ -9,12 +9,14 @@ import {
 import { StoreList } from "./store";
 import { storeAPI, categoryAPI } from "../../services/api";
 import { StoreListShimmer } from "../../components/shimmer";
+import { useUserLocation } from "../../hooks/useUserLocation";
 
 const HomePage = ({ onStoreClick, onCategoryClick }) => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { latitude, longitude, loading: locationLoading } = useUserLocation();
 
   // Fetch stores and categories on mount
   useEffect(() => {
@@ -22,8 +24,15 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       try {
         setLoading(true);
 
+        // Build params with user location if available
+        const params = { limit: 50 };
+        if (latitude && longitude) {
+          params.userLat = latitude;
+          params.userLon = longitude;
+        }
+
         // Fetch stores and categories separately to prevent one failure from affecting the other
-        const storesResponse = await storeAPI.getAll({ limit: 50 });
+        const storesResponse = await storeAPI.getAll(params);
         if (storesResponse?.data && Array.isArray(storesResponse.data)) {
           setStores(storesResponse.data);
         }
@@ -31,11 +40,8 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
         // Fetch categories separately with its own error handling
         try {
           const categoriesResponse = await categoryAPI.getAll();
-          if (
-            categoriesResponse?.data &&
-            Array.isArray(categoriesResponse.data)
-          ) {
-            setCategories(categoriesResponse.data);
+          if (categoriesResponse && Array.isArray(categoriesResponse)) {
+            setCategories(categoriesResponse);
           }
         } catch (categoryError) {
           console.error("Error fetching categories:", categoryError);
@@ -50,7 +56,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
     };
 
     fetchData();
-  }, []);
+  }, [latitude, longitude]); // Re-fetch when location changes
 
   // Filter stores based on category
   const filteredStores = stores.filter((store) => {
@@ -67,6 +73,7 @@ const HomePage = ({ onStoreClick, onCategoryClick }) => {
       <Header
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        categories={categories}
       />
 
       <GroceryKitchenSection onCategoryClick={onCategoryClick} />
