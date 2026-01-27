@@ -11,6 +11,7 @@ import {
   StoreBannerShimmer,
   ProductGridShimmer,
 } from "../../components/shimmer";
+import { useUserLocation } from "../../hooks/useUserLocation";
 
 const StoreDetailPage = () => {
   const { storeName } = useParams();
@@ -26,6 +27,7 @@ const StoreDetailPage = () => {
   const fromSubcategory = location.state?.fromSubcategory;
   const searchContext = location.state?.searchContext; // { query, category, productId, highlightProduct }
   const highlightProductRef = useRef(null);
+  const { latitude, longitude } = useUserLocation();
 
   // Fetch cart items
   const fetchCartItems = async () => {
@@ -64,7 +66,14 @@ const StoreDetailPage = () => {
         // Fetch store if not in location state
         let storeData = store;
         if (!storeData) {
-          const response = await storeAPI.getById(storeName);
+          // Build params with user location if available
+          const params = {};
+          if (latitude && longitude) {
+            params.userLat = latitude;
+            params.userLon = longitude;
+          }
+
+          const response = await storeAPI.getById(storeName, params);
           if (response.success && response.data) {
             storeData = response.data;
             setStore(storeData);
@@ -162,10 +171,11 @@ const StoreDetailPage = () => {
       await cartAPI.updateCartItem(cartItem.itemId, newQuantity);
       window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
-      console.error("Error updating quantity:", error);
       // Revert to previous state on error
       setCartItems(previousCartItems);
-      toast.error("Failed to update quantity", {
+      const errorMessage =
+        error.response?.data?.message || "Failed to update quantity";
+      toast.error(errorMessage, {
         duration: 2000,
         position: "top-center",
         style: {
@@ -194,10 +204,11 @@ const StoreDetailPage = () => {
       await cartAPI.removeFromCart(cartItem.itemId);
       window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
-      console.error("Error removing from cart:", error);
       // Revert to previous state on error
       setCartItems(previousCartItems);
-      toast.error("Failed to remove from cart", {
+      const errorMessage =
+        error.response?.data?.message || "Failed to remove from cart";
+      toast.error(errorMessage, {
         duration: 2000,
         position: "top-center",
         style: {
@@ -233,7 +244,6 @@ const StoreDetailPage = () => {
         },
       });
     } catch (error) {
-      console.error("Error adding to cart:", error);
       if (error.response?.data?.code === "DIFFERENT_STORE") {
         // Show modal instead of toast
         setConflictData(error.response.data.data);
@@ -244,8 +254,13 @@ const StoreDetailPage = () => {
         });
         setShowConflictModal(true);
       } else {
-        toast.error("Failed to add to cart", {
-          duration: 2000,
+        // Show the actual error message from backend if available
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to add to cart";
+        toast.error(errorMessage, {
+          duration: 3000,
           position: "top-center",
           style: {
             background: "#1a1a1a",
@@ -493,7 +508,7 @@ const StoreDetailPage = () => {
       <StoreBanner store={store} />
 
       {/* Search Context Indicator */}
-      {searchContext?.query && (
+      {/* {searchContext?.query && (
         <div className="mx-4 mt-4 mb-2 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
@@ -504,7 +519,7 @@ const StoreDetailPage = () => {
             </span>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Products Section */}
       <ProductsGrid

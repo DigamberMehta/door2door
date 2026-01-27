@@ -17,9 +17,10 @@ export const storeAPI = {
   /**
    * Get store by ID or slug
    * @param {string} identifier - Store ID or slug
+   * @param {Object} params - Query parameters (userLat, userLon)
    */
-  getById: async (identifier) => {
-    const response = await apiClient.get(`/stores/${identifier}`);
+  getById: async (identifier, params = {}) => {
+    const response = await apiClient.get(`/stores/${identifier}`, { params });
     return response; // { success: true, data: {...} }
   },
 

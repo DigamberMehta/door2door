@@ -26,10 +26,18 @@ const StoreBanner = ({ store }) => {
                 {store.name}
               </h1>
               <div className="flex items-center gap-1.5 text-zinc-400 text-[12px] font-medium">
+                {store.distance && (
+                  <>
+                    <span className="text-blue-400 font-semibold">
+                      {store.distance} km
+                    </span>
+                    <span className="opacity-30">•</span>
+                  </>
+                )}
                 <span>{store.deliveryTime || "25-30 mins"}</span>
-                <span className="opacity-30">|</span>
+                <span className="opacity-30">•</span>
                 <span className="truncate">
-                  {store.location || "Local Area"}
+                  {store.address?.city || store.location || "Local Area"}
                 </span>
               </div>
             </div>

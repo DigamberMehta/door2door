@@ -5,7 +5,10 @@ import { asyncHandler } from "../middleware/validation.js";
 import fuzzysort from "fuzzysort";
 import { expandQueryWithSynonyms } from "../config/synonyms.js";
 import DeliverySettings from "../models/DeliverySettings.js";
-import { calculateDistance, calculateDeliveryCharge } from "../utils/distanceCalculator.js";
+import {
+  calculateDistance,
+  calculateDeliveryCharge,
+} from "../utils/distanceCalculator.js";
 
 /**
  * @desc Get all stores with filters
@@ -53,7 +56,7 @@ export const getStores = asyncHandler(async (req, res) => {
 
     if (!isNaN(userLatNum) && !isNaN(userLonNum)) {
       stores = stores
-        .map(store => {
+        .map((store) => {
           const storeLat = store.address?.latitude;
           const storeLon = store.address?.longitude;
 
@@ -61,7 +64,12 @@ export const getStores = asyncHandler(async (req, res) => {
             return null;
           }
 
-          const distance = calculateDistance(userLatNum, userLonNum, storeLat, storeLon);
+          const distance = calculateDistance(
+            userLatNum,
+            userLonNum,
+            storeLat,
+            storeLon,
+          );
 
           // Filter out stores beyond max delivery distance
           if (distance > maxDistance) {
@@ -77,10 +85,10 @@ export const getStores = asyncHandler(async (req, res) => {
             ...store,
             distance,
             deliveryCharge,
-            currency: deliverySettings?.currency || "R"
+            currency: deliverySettings?.currency || "R",
           };
         })
-        .filter(store => store !== null);
+        .filter((store) => store !== null);
 
       // Sort by distance if user location is provided
       if (sortBy === "distance" || (userLat && userLon)) {
@@ -114,11 +122,13 @@ export const getStores = asyncHandler(async (req, res) => {
       limit: parseInt(limit),
       pages: Math.ceil(total / parseInt(limit)),
     },
-    deliverySettings: deliverySettings ? {
-      maxDeliveryDistance: deliverySettings.maxDeliveryDistance,
-      currency: deliverySettings.currency,
-      distanceTiers: deliverySettings.distanceTiers
-    } : null
+    deliverySettings: deliverySettings
+      ? {
+          maxDeliveryDistance: deliverySettings.maxDeliveryDistance,
+          currency: deliverySettings.currency,
+          distanceTiers: deliverySettings.distanceTiers,
+        }
+      : null,
   });
 });
 
@@ -129,17 +139,18 @@ export const getStores = asyncHandler(async (req, res) => {
  */
 export const getStoreById = asyncHandler(async (req, res) => {
   const { identifier } = req.params;
+  const { userLat, userLon } = req.query;
 
   let store;
 
   // Check if identifier is a valid ObjectId
   if (mongoose.Types.ObjectId.isValid(identifier)) {
-    store = await Store.findById(identifier);
+    store = await Store.findById(identifier).lean();
   }
 
   // If not found by ID or not a valid ObjectId, try slug
   if (!store) {
-    store = await Store.findOne({ slug: identifier, isActive: true });
+    store = await Store.findOne({ slug: identifier, isActive: true }).lean();
   }
 
   if (!store) {
@@ -147,6 +158,38 @@ export const getStoreById = asyncHandler(async (req, res) => {
       success: false,
       message: "Store not found",
     });
+  }
+
+  // Calculate distance if user location provided
+  if (
+    userLat &&
+    userLon &&
+    store.address?.latitude &&
+    store.address?.longitude
+  ) {
+    const userLatNum = parseFloat(userLat);
+    const userLonNum = parseFloat(userLon);
+
+    if (!isNaN(userLatNum) && !isNaN(userLonNum)) {
+      const distance = calculateDistance(
+        userLatNum,
+        userLonNum,
+        store.address.latitude,
+        store.address.longitude,
+      );
+
+      // Get delivery settings for charge calculation
+      const deliverySettings = await DeliverySettings.findOne({
+        isActive: true,
+      });
+      const deliveryCharge = deliverySettings
+        ? calculateDeliveryCharge(distance, deliverySettings.distanceTiers)
+        : 0;
+
+      store.distance = distance;
+      store.deliveryCharge = deliveryCharge;
+      store.currency = deliverySettings?.currency || "R";
+    }
   }
 
   res.status(200).json({
