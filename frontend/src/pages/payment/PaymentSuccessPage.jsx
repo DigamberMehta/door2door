@@ -35,6 +35,9 @@ const PaymentSuccessPage = () => {
         const response = await getPayment(paymentId);
         setPayment(response.payment || response.data?.payment);
 
+        // Trigger cart update event to clear cart in UI
+        window.dispatchEvent(new CustomEvent("cartUpdated"));
+
         // Show success toast
         toast.success("Payment confirmed successfully!");
       } catch (error) {

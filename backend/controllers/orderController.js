@@ -344,12 +344,17 @@ export const createOrder = async (req, res) => {
 
     // Clear user's cart
     await Cart.findOneAndUpdate(
-      { user: userId },
+      { userId: userId, status: "active" },
       {
-        items: [],
-        subtotal: 0,
-        totalItems: 0,
-        appliedCoupon: null,
+        $set: {
+          items: [],
+          subtotal: 0,
+          totalItems: 0,
+          totalQuantity: 0,
+          appliedCoupon: null,
+          storeId: null,
+          storeName: null,
+        },
       },
     );
 
