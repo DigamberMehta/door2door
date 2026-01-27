@@ -12,7 +12,7 @@ const BeautyPersonalCareSection = ({ onCategoryClick }) => {
       try {
         setLoading(true);
         // API service returns unwrapped data array directly
-        const data = await categoryAPI.getSubcategories("beauty-personal-care");
+        const data = await categoryAPI.getSubcategories("beauty");
 
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,

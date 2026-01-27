@@ -12,7 +12,7 @@ const HomeLifestyleSection = ({ onCategoryClick }) => {
       try {
         setLoading(true);
         // API service returns unwrapped data array directly
-        const data = await categoryAPI.getSubcategories("home-furniture");
+        const data = await categoryAPI.getSubcategories("home");
 
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,

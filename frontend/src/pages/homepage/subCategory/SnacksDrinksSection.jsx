@@ -12,7 +12,7 @@ const SnacksDrinksSection = ({ onCategoryClick }) => {
       try {
         setLoading(true);
         // API service returns unwrapped data array directly
-        const data = await categoryAPI.getSubcategories("snacks-drinks");
+        const data = await categoryAPI.getSubcategories("snacks");
 
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
           id: cat._id,

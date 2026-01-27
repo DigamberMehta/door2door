@@ -12,7 +12,7 @@ const GroceryKitchenSection = ({ onCategoryClick }) => {
       try {
         setLoading(true);
         // API service returns unwrapped data array directly
-        const data = await categoryAPI.getSubcategories("grocery-kitchen");
+        const data = await categoryAPI.getSubcategories("grocery");
 
         // Transform API data to match component format
         const items = (Array.isArray(data) ? data : []).map((cat) => ({
