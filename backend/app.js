@@ -16,6 +16,8 @@ import deliverySettingsRoutes from "./routes/deliverySettingsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import adminRoutes from "./routes/admin/index.js";
+import storeManagerRoutes from "./routes/store/index.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 import { connectRedis } from "./config/redis.js";
 
@@ -96,6 +98,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);
 app.use("/api/drivers", driverAuthRoutes);
 app.use("/api/driver-profile", driverProfileRoutes);
+
+// Dashboard routes
+app.use("/api/admin", adminRoutes);
+app.use("/api/managers", storeManagerRoutes);
 
 // Error handling middleware
 app.use(notFound);
