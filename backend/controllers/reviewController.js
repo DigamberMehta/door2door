@@ -8,24 +8,22 @@ export const createReview = async (req, res) => {
   try {
     const { reviewType, productId, storeId, riderId, rating, comment } = req.body;
 
-    // For product reviews, check if user has purchased the product
-    if (reviewType === "product") {
+    // For product reviews, check if user has purchased the product (optional)
+    if (reviewType === "product" && productId) {
       const order = await Order.findOne({
         user: req.user._id,
         "items.product": productId,
         status: "delivered",
       });
 
-      if (!order) {
-        return res.status(403).json({
-          success: false,
-          message: "You can only review products you have purchased and received.",
-        });
+      if (order) {
+        // User has purchased this product - mark as verified
+        req.body.orderId = order._id;
+        req.body.isVerifiedPurchase = true;
+      } else {
+        // User hasn't purchased - still allow review but mark as unverified
+        req.body.isVerifiedPurchase = false;
       }
-      
-      // Assign orderId from the found order
-      req.body.orderId = order._id;
-      req.body.isVerifiedPurchase = true;
     }
 
     const review = await Review.create({
@@ -53,13 +51,19 @@ export const getProductReviews = async (req, res) => {
     const { productId } = req.params;
     const { page = 1, limit = 10, sortBy = "createdAt" } = req.query;
 
+    console.log("🔍 Fetching reviews for productId:", productId);
+
     const reviews = await Review.getReviewsByProduct(productId, page, limit, sortBy);
+
+    console.log("📊 Found reviews:", reviews.length);
+    console.log("📋 Reviews data:", JSON.stringify(reviews, null, 2));
 
     res.status(200).json({
       success: true,
       data: reviews,
     });
   } catch (error) {
+    console.error("❌ Error in getProductReviews:", error);
     res.status(400).json({
       success: false,
       message: error.message,

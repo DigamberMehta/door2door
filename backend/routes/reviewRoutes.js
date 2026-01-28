@@ -5,7 +5,7 @@ import {
   getReviewStats,
   voteReview,
 } from "../controllers/reviewController.js";
-import { protect } from "../middleware/auth.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.get("/product/:productId", getProductReviews);
 router.get("/stats/:type/:id", getReviewStats);
 
 // Protected routes
-router.post("/", protect, createReview);
-router.post("/:id/vote", protect, voteReview);
+router.post("/", authenticate, createReview);
+router.post("/:id/vote", authenticate, voteReview);
 
 export default router;

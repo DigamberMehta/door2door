@@ -15,6 +15,7 @@ import couponRoutes from "./routes/couponRoutes.js";
 import deliverySettingsRoutes from "./routes/deliverySettingsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 import { errorHandler, notFound } from "./middleware/validation.js";
 import { connectRedis } from "./config/redis.js";
 
@@ -89,6 +90,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/delivery-settings", deliverySettingsRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/reviews", reviewRoutes);
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/customer-profile", customerProfileRoutes);

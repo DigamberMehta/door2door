@@ -73,7 +73,6 @@ const reviewSchema = new mongoose.Schema(
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
-      required: [true, "Order ID is required"],
       index: true,
     },
 
@@ -109,7 +108,6 @@ const reviewSchema = new mongoose.Schema(
     },
     comment: {
       type: String,
-      required: [true, "Comment is required"],
       trim: true,
       minlength: [10, "Comment must be at least 10 characters"],
       maxlength: [2000, "Comment cannot exceed 2000 characters"],
@@ -182,7 +180,7 @@ const reviewSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "approved", "rejected", "hidden"],
-      default: "pending",
+      default: "approved",
       index: true,
     },
     moderatedBy: {
@@ -430,6 +428,13 @@ reviewSchema.statics.getReviewsByProduct = function (
       sortOption.createdAt = -1;
   }
 
+  console.log("🔍 Query params:", {
+    reviewType: "product",
+    productId: productId,
+    status: "approved",
+    isPublic: true,
+  });
+
   return this.find({
     reviewType: "product",
     productId: productId,
@@ -515,14 +520,102 @@ reviewSchema.statics.getReviewStats = function (targetType, targetId) {
     reviewType: targetType,
     status: "approved",
   };
-  matchQuery[`${targetType}Id`] = targetId;
+  
+  // Convert to ObjectId if it's a string
+  const objectIdValue = typeof targetId === 'string' 
+    ? new mongoose.Types.ObjectId(targetId)
+    : targetId;
+    
+  matchQuery[`${targetType}Id`] = objectIdValue;
+
+  console.log("📊 getReviewStats matchQuery:", JSON.stringify(matchQuery, null, 2));
 
   return this.aggregate([
     { $match: matchQuery },
     {
+      $addFields: {
+        // Calculate days since review was created
+        daysSinceReview: {
+          $divide: [
+            { $subtract: ["$$NOW", "$createdAt"] },
+            86400000, // milliseconds in a day (1000 * 60 * 60 * 24)
+          ],
+        },
+        // Recency weight: newer reviews get higher weight (exponential decay)
+        // Reviews decay to 50% weight after 180 days
+        recencyWeight: {
+          $exp: {
+            $multiply: [
+              -0.00385, // decay constant (ln(0.5)/180)
+              {
+                $divide: [
+                  { $subtract: ["$$NOW", "$createdAt"] },
+                  86400000,
+                ],
+              },
+            ],
+          },
+        },
+        // Verified purchase weight: 1.5x for verified, 1.0x for unverified
+        verifiedWeight: {
+          $cond: ["$isVerifiedPurchase", 1.5, 1.0],
+        },
+        // Trustworthiness weight based on engagement
+        trustWeight: {
+          $add: [
+            1.0,
+            // Bonus for helpful votes (up to +0.3)
+            {
+              $min: [
+                0.3,
+                { $multiply: [{ $divide: ["$helpfulVotes", 10] }, 0.3] },
+              ],
+            },
+            // Penalty for reports (up to -0.5)
+            { $multiply: ["$reportCount", -0.1] },
+          ],
+        },
+      },
+    },
+    {
+      $addFields: {
+        // Combined weight (recency × verified × trust)
+        totalWeight: {
+          $max: [
+            0.1, // Minimum weight to ensure no review is completely ignored
+            {
+              $multiply: ["$recencyWeight", "$verifiedWeight", "$trustWeight"],
+            },
+          ],
+        },
+        // Weighted rating value
+        weightedRating: {
+          $multiply: [
+            "$rating",
+            {
+              $max: [
+                0.1,
+                {
+                  $multiply: [
+                    "$recencyWeight",
+                    "$verifiedWeight",
+                    "$trustWeight",
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+    {
       $group: {
         _id: null,
-        averageRating: { $avg: "$rating" },
+        // Sum values for weighted average calculation
+        totalWeightedRating: { $sum: "$weightedRating" },
+        totalWeight: { $sum: "$totalWeight" },
+        // Simple average for comparison
+        simpleAverage: { $avg: "$rating" },
         totalReviews: { $sum: 1 },
         fiveStars: { $sum: { $cond: [{ $eq: ["$rating", 5] }, 1, 0] } },
         fourStars: { $sum: { $cond: [{ $eq: ["$rating", 4] }, 1, 0] } },
@@ -533,6 +626,33 @@ reviewSchema.statics.getReviewStats = function (targetType, targetId) {
           $sum: { $cond: [{ $gt: [{ $size: "$media" }, 0] }, 1, 0] },
         },
         verifiedPurchases: { $sum: { $cond: ["$isVerifiedPurchase", 1, 0] } },
+        // Additional insights
+        avgRecencyWeight: { $avg: "$recencyWeight" },
+        avgVerifiedWeight: { $avg: "$verifiedWeight" },
+        avgTrustWeight: { $avg: "$trustWeight" },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        averageRating: {
+          $round: [
+            { $divide: ["$totalWeightedRating", "$totalWeight"] },
+            1,
+          ],
+        },
+        simpleAverage: { $round: ["$simpleAverage", 1] },
+        totalReviews: 1,
+        fiveStars: 1,
+        fourStars: 1,
+        threeStars: 1,
+        twoStars: 1,
+        oneStar: 1,
+        withMedia: 1,
+        verifiedPurchases: 1,
+        avgRecencyWeight: { $round: ["$avgRecencyWeight", 2] },
+        avgVerifiedWeight: { $round: ["$avgVerifiedWeight", 2] },
+        avgTrustWeight: { $round: ["$avgTrustWeight", 2] },
       },
     },
   ]);
